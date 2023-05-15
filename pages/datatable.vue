@@ -2,13 +2,15 @@
   <div>
       <h1>DataTable</h1>
 
+      <va-input :label="'SearchKeyword'" v-model="filterKeyword"></va-input>
+
       <va-data-table :items="datas" :no-data-html="noItemText"
                      :no-data-filtered-html="noItemText"
                      :columns="columns" :per-page="pageSize" :current-page="currentPage"
-                     :filter="filterKeyword" @filtered="filter = $event.items"
+                     :filter="filterKeyword" @filtered="filtered = $event.items"
                      :loading="loading" sticky-header>
 
-          <template #cell(detail)="{ rowIndex, rowData }">
+          <template #cell(DETAIL)="{ rowIndex, rowData }">
               <va-button preset="secondary">
                   <va-icon name="search" v-on:click="getDetail(rowData)"></va-icon>
               </va-button>
@@ -18,8 +20,8 @@
           <template #bodyAppend>
               <tr>
                   <td colspan="7">
-                      <div class="page-view">
-                          <va-pagination v-model="currentPage" :pages="pageView()" style="display: table; margin: auto;"/>
+                      <div class="table-pagination">
+                          <va-pagination v-model="currentPage" :pages="pageView()" input/>
                       </div>
                   </td>
               </tr>
@@ -32,38 +34,48 @@
 import { DataTableItem } from "vuestic-ui";
 
 onMounted( () => {
-    createData(5);
+    createData(30);
 });
 
-const loading: boolean = false;
-const pageSize: number = 10;
-const currentPage: number = 1;
-const filterKeyword: string = "";
-const noItemText: string = "No Item";
+const loading: globalThis.Ref<boolean> = ref(false);
+const pageSize: globalThis.Ref<number> = ref(10);
+const currentPage: globalThis.Ref<number> = ref(1);
+const filterKeyword: globalThis.Ref<string> = ref("");
+const noItemText: globalThis.Ref<string> = ref("No Item");
 const pageView = () => {
-    return pageSize && pageSize !== 0 ? Math.ceil(datas.value.length / pageSize) : datas.value.length;
+    console.log(pageSize.value);
+    console.log(datas.value);
+    return pageSize.value && pageSize.value !== 0 ? Math.ceil(filtered.value.length / pageSize.value) : filtered.value.length;
 }
 
-const COLUMNS_NAME = ref(["name", "age", "detail"]);
+const COLUMNS_NAME = ref(["CPU", "GPU", "MEMORY", "PRICE", "BUY_DATE", "DETAIL"]);
 const columns = [
-    {key: COLUMNS_NAME.value[0], label: "이름", sortable: true},
-    {key: COLUMNS_NAME.value[1], label: "나이", sortable: true},
-    {key: COLUMNS_NAME.value[2], label: "상세정보", sortable: false}
+    {key: COLUMNS_NAME.value[0], label: "CPU", sortable: true},
+    {key: COLUMNS_NAME.value[1], label: "GPU", sortable: true},
+    {key: COLUMNS_NAME.value[2], label: "MEMORY", sortable: true},
+    {key: COLUMNS_NAME.value[3], label: "PRICE", sortable: true},
+    {key: COLUMNS_NAME.value[4], label: "BUY_DATE", sortable: false},
+    {key: COLUMNS_NAME.value[5], label: "DETAIL", sortable: false}
 ];
 const datas: globalThis.Ref<DataTableItem> = ref([]);
+const filtered: globalThis.Ref<DataTableItem> = ref([]);
 
 const createData = (size: number) => {
-    for (let idx=0; idx<size; idx++) {
+    for (let idx=1; idx<=size; idx++) {
         let json: any = {};
-        json[COLUMNS_NAME.value[0]] = "TEST_NAME_" +idx;
-        json[COLUMNS_NAME.value[1]] = Math.ceil(Math.random() % 100);
-        json[COLUMNS_NAME.value[2]] = "TEST_NAME_" +idx;
+        json[COLUMNS_NAME.value[0]] = "INTEL_i" +idx;
+        json[COLUMNS_NAME.value[1]] = "Nvidia Geforce " +idx+ " Series";
+        json[COLUMNS_NAME.value[2]] = idx+ "GB";
+        json[COLUMNS_NAME.value[3]] = "￦" +Math.ceil((Math.random() % idx) * 1000000);
+        json[COLUMNS_NAME.value[4]] = new Date();
+        json[COLUMNS_NAME.value[5]] = "INTEL_i" +idx;
         datas.value.push(json);
+        filtered.value.push(json);
     }
 }
 
 const getDetail = (rowData: any) => {
-    alert(rowData[COLUMNS_NAME.value[2]]);
+    alert(rowData[COLUMNS_NAME.value[5]]);
 }
 
 </script>
@@ -72,5 +84,9 @@ const getDetail = (rowData: any) => {
 h1 {
     font-size: 20pt;
     margin-bottom: 20px;
+}
+.table-pagination {
+    display: flex;
+    justify-content: center;
 }
 </style>
