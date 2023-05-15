@@ -25,7 +25,7 @@ const createEdge = (params: any) => {
 
 const setOperatorDataTransfer = (nodeCategory: string, nodeAttributes: any): OperatorDataTransfer => {
     return {
-        operatorLabel: "<b>[" + nodeCategory + "]</b><br/>" + nodeAttributes.operatorName,
+        operatorLabel: nodeCategory+ "." + nodeAttributes.operatorName,
         operatorName: nodeAttributes.operatorName,
         operatorAttributes: JSON.stringify(nodeAttributes.attributes)
     }

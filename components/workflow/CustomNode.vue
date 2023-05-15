@@ -5,7 +5,9 @@
     </NodeToolbar>
 
     <div class="operator">
-      {{ label }}
+        <fieldset>
+            <va-input label="Operator Label" v-model="props.label" :background="'#dfdfdf'" readonly/>
+        </fieldset>
     </div>
 
     <Handle type="target" :position="Position.Top" />
@@ -39,8 +41,10 @@ const props = defineProps<Props>()
   margin: 0px 5px 0px 0px;
 }
 .operator {
-  padding: 10px;
-  border: 1px solid dimgray;
-  border-radius: 20px;
+    padding: 10px;
+    border: 1px solid #cccccc;
+    border-radius: 5px;
+    text-align: center;
+    background-color: rgba(248, 248, 248, 0.59);
 }
 </style>

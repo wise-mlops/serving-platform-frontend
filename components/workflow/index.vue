@@ -1,53 +1,60 @@
 <template>
-    <va-alert id="alert-warning" color="#ce6e67" v-if="attributeHandler.warningAlertState()">수정중인
-        속성창을 먼저 닫아주세요.
-    </va-alert>
-    <div style="height:calc( 100vh - 120px ); display:table" @drop="onDrop">
-        <div style="display:table-row;">
-            <va-sidebar style="display: table-cell;">
-                <va-accordion
-                    v-model="propsOperatorExpand"
-                >
-                    <va-collapse
-                        v-for="(group, category) in $props.operators"
-                        :key="category"
-                        :header="category"
-                        text-color="textPrimary"
-                        color="textInverted"
-                    >
-                        <div v-for="(operator, idx) in group" :key="operator"
-                             class="operator-list vue-flow__node-default" :draggable="true"
-                             @dragstart="onDragStart($event, category, operator)">
-                            <span class="operator-node">{{ operator.operatorName }}</span>
-                        </div>
-                        <!--<div class="vue-flow__node-input" :draggable="true" @dragstart="onDragStart($event, 'input')">Input Node</div>
-                        <div class="vue-flow__node-default" :draggable="true" @dragstart="onDragStart($event, 'default')">Default Node</div>
-                        <div class="vue-flow__node-default" :draggable="true" @dragstart="onDragStart($event, 'default2')">222Default Node</div>
-                        <div class="vue-flow__node-output" :draggable="true" @dragstart="onDragStart($event, 'output')">Output Node</div>-->
-                    </va-collapse>
-                </va-accordion>
-            </va-sidebar>
+    <div>
+        <va-alert id="alert-warning" color="#ce6e67" v-if="attributeHandler.warningAlertState()">수정중인
+            속성창을 먼저 닫아주세요.
+        </va-alert>
+        <div style="position: relative; width: 100%; height: 650px;" @drop="onDrop">
+            <div style="position: absolute; width: 18%; min-width: 175px;">
+                <div v-if="operatorListActive" style="width: 90%; position: relative; display: inline-block;">
+                    <va-sidebar style="width: 100%; background: rgb(0,0,0,0);">
+                        <va-accordion v-model="propsOperatorExpand">
+                            <va-collapse v-for="(group, category) in $props.operators" :key="category"
+                                         :header="category" text-color="textPrimary" color="textInverted">
+                                <div v-for="(operator, idx) in group" :key="operator"
+                                     class="operator-list vue-flow__node-default" :draggable="true"
+                                     @dragstart="onDragStart($event, category, operator)"
+                                     style="text-align: center; border: #efefef solid 1px;">
+                                    <div class="operator-label"></div>
+                                    <div class="operator-node">{{ operator.operatorName }}</div>
+                                </div>
+                                <!--<div class="vue-flow__node-input" :draggable="true" @dragstart="onDragStart($event, 'input')">Input Node</div>
+                                <div class="vue-flow__node-default" :draggable="true" @dragstart="onDragStart($event, 'default')">Default Node</div>
+                                <div class="vue-flow__node-default" :draggable="true" @dragstart="onDragStart($event, 'default2')">222Default Node</div>
+                                <div class="vue-flow__node-output" :draggable="true" @dragstart="onDragStart($event, 'output')">Output Node</div>-->
+                            </va-collapse>
+                        </va-accordion>
+                    </va-sidebar>
+                </div>
+                <div style="width: 10%; position: relative; z-index: 10; display: inline-block;">
+                    <va-icon :name="'menu_open'" :size="'3em'" v-if="operatorListActive" style="line-height: 0px; height: 0px;" v-on:click="operatorListActive = !operatorListActive"></va-icon>
+                    <va-icon :name="'menu'" :size="'3em'" v-if="!operatorListActive" style="line-height: 0px; height: 0px; margin-top: 27px;" v-on:click="operatorListActive = !operatorListActive"></va-icon>
+                </div>
+            </div>
 
-            <VueFlow
-                v-model="$props.setWorkflowJson"
-                fit-view-on-init
-                @dragover="onDragOver"
-                class="vue-flow-basic-example"
-                style="display: table-cell;">
-                <Background variant="dots"/>
-                <MiniMap/>
-                <Controls/>
-                <template #node-toolbar="nodeProps">
-                    <CustomNode :id="nodeProps.id" :label="nodeProps.label" :toolbar="nodeProps"/>
-                </template>
-                <template #edge-custom="props">
-                    <CustomEdge v-bind="props"/>
-                </template>
-            </VueFlow>
+            <div style="width: 10%; position: absolute; right: 0px;">
+                <workflow-detail v-if="attributeHandler.attributesState()" :enabled="enabled"
+                                 :operatorAttributes="workflow.getOperatorDetailInfo()"
+                                 @saveBtn="save()" @closeBtn="close()"
+                                 style="float: right; height: 100%;"
+                ></workflow-detail>
+            </div>
 
-            <workflow-detail v-if="attributeHandler.attributesState()" :enabled="enabled"
-                             :operatorAttributes="workflow.getOperatorDetailInfo()"
-                             @saveBtn="save()" @closeBtn="close()"></workflow-detail>
+            <div style="width: 100%; position: relative; z-index: 10; display: contents;">
+                <VueFlow
+                    v-model="$props.setWorkflowJson" fit-view-on-init @dragover="onDragOver"
+                    class="vue-flow-basic-example"
+                    style="width: 100%; height: 100%;">
+                    <Background variant="dots"/>
+                    <MiniMap/>
+                    <Controls/>
+                    <template #node-toolbar="nodeProps">
+                        <CustomNode :id="nodeProps.id" :label="nodeProps.label" :toolbar="nodeProps"/>
+                    </template>
+                    <template #edge-custom="props">
+                        <CustomEdge v-bind="props"/>
+                    </template>
+                </VueFlow>
+            </div>
         </div>
     </div>
 </template>
@@ -70,6 +77,7 @@ import OperatorDataTransfer, * as workflow from './ts/Workflow';
 import AttributeHandler from './ts/AttributeHandler';
 
 const attributeHandler = new AttributeHandler();
+const operatorListActive: globalThis.Ref<boolean> = ref(true);
 
 const emit = defineEmits(["toggle-drawer"]);
 const DEFINE: any = {
@@ -213,15 +221,21 @@ const onDrop = (event: any) => {
 .operator-list {
     width: 100%;
     height: 45px;
+    padding: 0 0 0 0;
 }
-
+.operator-label {
+    float: left;
+    width: 10px;
+    height: 100%;
+    background: #ff7878;
+}
 .operator-node {
-    font-size: 14pt;
+    font-size: 10pt;
     font-weight: normal;
     font-family: Consolas;
     text-align: center;
+    padding-top: 15px;
 }
-
 #alert-warning {
     text-align: center;
     font-weight: bold;

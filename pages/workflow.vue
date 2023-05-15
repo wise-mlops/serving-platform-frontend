@@ -3,7 +3,10 @@
         <h1>Workflow</h1>
 
         <va-button v-on:click="getJson()">SAVE</va-button>
-        <workflow :setWorkflowJson="workflowJson" @getWorkflowJson="save" :operators="operatorList"></workflow>
+
+        <div style="width: 100%; height: 400px; margin-top: 10px;">
+            <workflow :setWorkflowJson="workflowJson" @getWorkflowJson="save" :operators="operatorList"></workflow>
+        </div>
     </div>
 </template>
 
@@ -45,5 +48,9 @@ const save = (json: any) => {
 h1 {
     font-size: 20pt;
     margin-bottom: 20px;
+}
+
+#workflow-area {
+    width: 200px;
 }
 </style>
