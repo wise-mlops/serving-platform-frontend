@@ -27,7 +27,7 @@
       <va-sidebar-item
         v-for="(subItem, idx) in item.subItems"
         :key="idx"
-        @click="$event => setRouteActive(subItem.path)"
+        @click="setRouteActive(subItem.path)"
         :active="isRouteActive(subItem.path)"
       >
         <va-sidebar-item-content>
@@ -42,7 +42,7 @@
 </template>
 
 <script setup lang="ts">
-
+const config = useAppConfig();
 const router = useRouter();
 const route = useRoute();
 
@@ -71,7 +71,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 // LOGO 관련
 const logoUrl = ref('/img/logo.png');
-const logoTitle = ref('관리도구 샘플 프로젝트!!!!!')
+const logoTitle = ref(config.logoTitle)
 
 // SIDEBAR관련
 const minimized = ref(false);
