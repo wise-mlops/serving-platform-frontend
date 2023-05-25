@@ -1,0 +1,1 @@
+import{o as t,p as o,$ as r}from"./entry.d1bdf53c.js";import{u as a}from"./composables.dab94feb.js";const u={__name:"login",setup(s){return a({title:"로그인 페이지!!"}),(e,l)=>(t(),o("div",null,[r(e.$slots,"default")]))}};export{u as default};
