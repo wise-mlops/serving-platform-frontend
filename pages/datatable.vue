@@ -21,7 +21,8 @@
               :columns="productsCol"
               :per-page="pageSize"
               :current-page="currentPage"
-              :filter="filterKeyword" 
+              :filter="filterKeyword"
+              @filtered="filtered = $event.items;"
               sticky-header
             >
               <template #cell(detail)="{ rowIndex, rowData }">
@@ -36,7 +37,7 @@
                     <div class="page-view">
                       <va-pagination 
                         v-model="currentPage" 
-                        :pages="pagenationView(pageSize, datas?.products)" 
+                        :pages="pagenationView(pageSize, datas?.products, filtered)"
                         :visible-pages="5"
                         gapped
                       />
@@ -61,11 +62,16 @@ const pageTitle = ref('Cluster Nodes')
 
 const currentPage = ref(1)
 const filterKeyword = ref("")
-const datas = await getDummyAPI()
+const datas = await getDummyAPI();
+const filtered = ref("");
 
 const getDetail = ( rowData: any) => {
   alert(rowData.title);
 }
+
+onUpdated( () => {
+  console.log(1234);
+})
 
 
 </script>
