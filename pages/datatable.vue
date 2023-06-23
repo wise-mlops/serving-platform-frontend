@@ -55,23 +55,16 @@
 </template>
 
 <script setup lang="ts">
-import { getDummyAPI } from '~~/composables/apis';
 import { productsCol } from '~~/composables/colums';
 
 const pageTitle = ref('Cluster Nodes')
 
 const currentPage = ref(1)
 const filterKeyword = ref("")
-const datas = await getDummyAPI();
+const datas = await restAPI.post("/products");
 const filtered = ref("");
 
-const getDetail = ( rowData: any) => {
+const getDetail = async (rowData: any) => {
   alert(rowData.title);
 }
-
-onUpdated( () => {
-  console.log(1234);
-})
-
-
 </script>
