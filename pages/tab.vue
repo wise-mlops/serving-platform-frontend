@@ -1,34 +1,38 @@
 <template>
   <div>
-      <h1>Tab</h1>
+    <h1>Tab</h1>
 
-      <tabs :columns="new Tab().tabList" @useTab="new Tab().setTabTitle"></tabs>
-      <div id="wisenut-tab-contents">
-          <h2>{{ selectTab }}</h2>
-      </div>
+    <va-tabs v-model="selectTab">
+      <template #tabs>
+        <va-tab v-for="(item, idx) in tabList" :key="item">
+          {{ item.title }}
+        </va-tab>
+      </template>
+    </va-tabs>
+
+    <div id="wisenut-tab-contents">
+        <h2>{{ tabList[selectTab].title }}</h2>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 interface COLUMNS {
-    icon: string,
-    title: string
+  icon: string,
+  title: string
 };
 
-const selectTab: any = ref("Menu 1");
+interface Props {
+  columns: COLUMNS[]
+};
 
-class Tab {
+const selectTab = ref(0);
 
-    tabList: COLUMNS[] = [
-        {icon: "home", title: "Menu 1"},
-        {icon: "travel", title: "Menu 2"},
-        {icon: "pointer", title: "Menu 3"}
-    ];
-
-    setTabTitle = (value: any) => {
-        selectTab.value = value;
-    }
-}
+const tabList: COLUMNS[] = [
+  {icon: "home", title: "Menu 1"},
+  {icon: "travel", title: "Menu 2"},
+  {icon: "pointer", title: "Menu 3"}
+];
 </script>
 
 <style scoped>
