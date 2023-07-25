@@ -61,7 +61,7 @@ const pageTitle = ref('Cluster Nodes')
 
 const currentPage = ref(1)
 const filterKeyword = ref("")
-const datas = await restAPI.post("/products");
+const datas = await restAPI.get("/products");
 const filtered = ref("");
 
 const getDetail = async (rowData: any) => {
