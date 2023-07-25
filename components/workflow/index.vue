@@ -1,116 +1,185 @@
 <template>
-    <div>
-        <va-alert id="alert-warning" color="#ce6e67" v-if="attributeHandler.warningAlertState()">수정중인
-            속성창을 먼저 닫아주세요.
-        </va-alert>
-        <div style="position: relative; width: 100%; height: 650px;" @drop="onDrop">
-            <div style="position: absolute; width: 18%; min-width: 175px;">
-                <div v-if="operatorListActive" style="width: 90%; position: relative; display: inline-block;">
-                    <va-sidebar style="width: 100%; background: rgb(0,0,0,0);">
-                        <va-accordion v-model="propsOperatorExpand">
-                            <va-collapse v-for="(group, category) in $props.operators" :key="category"
-                                         :header="category" text-color="textPrimary" color="textInverted">
-                                <div v-for="(operator, idx) in group" :key="operator"
-                                     class="operator-list vue-flow__node-default" :draggable="true"
-                                     @dragstart="onDragStart($event, category, operator)"
-                                     style="text-align: center; border: #efefef solid 1px;">
-                                    <div class="operator-label"></div>
-                                    <div class="operator-node">{{ operator.operatorName }}</div>
-                                </div>
-                                <!--<div class="vue-flow__node-input" :draggable="true" @dragstart="onDragStart($event, 'input')">Input Node</div>
-                                <div class="vue-flow__node-default" :draggable="true" @dragstart="onDragStart($event, 'default')">Default Node</div>
-                                <div class="vue-flow__node-default" :draggable="true" @dragstart="onDragStart($event, 'default2')">222Default Node</div>
-                                <div class="vue-flow__node-output" :draggable="true" @dragstart="onDragStart($event, 'output')">Output Node</div>-->
-                            </va-collapse>
-                        </va-accordion>
-                    </va-sidebar>
-                </div>
-                <div style="width: 10%; position: relative; z-index: 10; display: inline-block;">
-                    <va-icon :name="'menu_open'" :size="'3em'" v-if="operatorListActive" style="line-height: 0px; height: 0px;" v-on:click="operatorListActive = !operatorListActive"></va-icon>
-                    <va-icon :name="'menu'" :size="'3em'" v-if="!operatorListActive" style="line-height: 0px; height: 0px; margin-top: 27px;" v-on:click="operatorListActive = !operatorListActive"></va-icon>
-                </div>
-            </div>
+    <div style="position: relative; height: 650px;" @drop="onDrop">
+        <!-- 오퍼레이터 사이드 메뉴창 -->
+        <div style="float: left; width: 15%; height: 100%;">
+            <va-sidebar v-if="operatorListActive" style="width: 100%; background: rgb(0,0,0,0);">
+                <va-accordion v-model="propsOperatorExpand">
+                    <va-collapse v-for="(group, category) in $props.operators"
+                                 :key="category"
+                                 :header="category" text-color="textPrimary"
+                                 color="textInverted">
+                        <div v-for="(operator, idx) in group" :key="operator"
+                             class="operator-list vue-flow__node-default" :draggable="true"
+                             @dragstart="onDragStart($event, category, operator)"
+                             style="text-align: center; border: #efefef solid 1px;">
+                            <div class="operator-label"></div>
+                            <div class="operator-node">{{ operator.operatorName }}</div>
+                        </div>
+                    </va-collapse>
+                </va-accordion>
+            </va-sidebar>
+        </div>
 
-            <div style="width: 10%; position: absolute; right: 0px;">
-                <workflow-detail v-if="attributeHandler.attributesState()" :enabled="enabled"
-                                 :operatorAttributes="workflow.getOperatorDetailInfo()"
-                                 @saveBtn="save()" @closeBtn="close()"
-                                 style="float: right; height: 100%;"
-                ></workflow-detail>
-            </div>
+        <!-- 워크플로우 캔버스 -->
+        <div style="float: left; width: 70%; height: 100%; top: 0px;">
+            <VueFlow v-model="workflowData" fit-view-on-init @dragover="onDragOver"
+                     class="vue-flow-basic-example" :default-viewport="vueFlowSetting"
+                     style="width: 100%; height: 100%;">
+                <Background variant="dots"/>
+                <MiniMap/>
+                <Controls/>
+                <template #node-toolbar="nodeProps">
+                    <CustomNode :dagId="workflowId" :id="nodeProps.id" :label="nodeProps.label"
+                                :attributes="getAttributes(nodeProps.id)" v-on:click="setNodeAttributes(nodeProps.id, getAttributes(nodeProps.id))">
+                    </CustomNode>
+                </template>
+                <template #edge-custom="props">
+                    <CustomEdge v-bind="props"/>
+                </template>
+            </VueFlow>
+        </div>
 
-            <div style="width: 100%; position: relative; z-index: 10; display: contents;">
-                <VueFlow
-                    v-model="$props.setWorkflowJson" fit-view-on-init @dragover="onDragOver"
-                    class="vue-flow-basic-example"
-                    style="width: 100%; height: 100%;">
-                    <Background variant="dots"/>
-                    <MiniMap/>
-                    <Controls/>
-                    <template #node-toolbar="nodeProps">
-                        <CustomNode :id="nodeProps.id" :label="nodeProps.label" :toolbar="nodeProps"/>
-                    </template>
-                    <template #edge-custom="props">
-                        <CustomEdge v-bind="props"/>
-                    </template>
-                </VueFlow>
-            </div>
+        <!-- 오퍼레이터 속성 설정창 -->
+        <div style="float: left; width: 15%; height: 100%;">
+            <workflow-detail :nodeId="nodeId" :dagId="workflowId"
+                                 :currentNode="nodeAttributes" :currentNodeOrigin="nodeAttributesOrigin"
+                                 @saveJson="saveJson" @saveFiles="saveFiles">
+            ></workflow-detail>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-// 워크플로우 라이브러리
-import {nextTick, watch} from "vue";
-import {VueFlow, useVueFlow, MarkerType} from '@vue-flow/core'
+import {restAPI} from '~/composables/apis';
+import {defineEmits} from "vue";
+const emit = defineEmits(["toggle-drawer"]);
+
+onMounted( () => {
+    let dagInfo = sessionStorage.getItem("dagInfo");
+    workflowData.value = JSON.parse(dagInfo)?.workflow;
+})
+
+const workflowSave = () => {
+    let jobs = {
+        json: workflowData,
+        files: uploadFiles
+    };
+
+    emit("workflowSave", jobs);
+}
+
+///////////////////////////////////
+/// 오퍼레이터 속성 기능 구현 로직 ///
+///////////////////////////////////
+const nodeId: globalThis.Ref<string> = ref("");
+const nodeAttributes: globalThis.Ref<object> = ref({});
+const nodeAttributesOrigin: globalThis.Ref<object> = ref({});
+const getAttributes = (operatorId: string): {} => {
+    let json = toObject()
+    let nodes = json.nodes;
+    if (!nodes) {
+        return {};
+    }
+    let data = nodes.filter(json => json.id === operatorId);
+    return data[0].attributes;
+}
+
+const setNodeAttributes = (id: string, node: object) => {
+    nodeId.value = id;
+    nodeAttributes.value = node;
+    for (let key in node) {
+        nodeAttributesOrigin.value[key] = node[key].value;
+    }
+}
+
+const searchOperator = (attributes: any) => {
+    let operators: any = toObject();
+
+    for (let idx in operators.nodes) {
+        if (operators.nodes[idx].id == nodeId.value) {
+            operators.nodes[idx].attributes = JSON.parse(JSON.stringify(attributes));
+            break;
+        }
+    }
+    return operators;
+}
+
+///////////////////////////////////
+/// 워크플로우 저장 기능 구현 로직 ///
+///////////////////////////////////
+const saveJson = (json: any = toObject()) => {
+    json = searchOperator(json);
+    let getNodes: object = json.nodes;
+    let getEdges: object = json.edges;
+
+    // 워크플로우를 다시 그리기 위해 데이터 파싱
+    let saveJson: [] = [];
+    if (getNodes) {
+        for (let idx in getNodes) {
+            saveJson.push(getNodes[idx]);
+        }
+    }
+    if (getEdges) {
+        for (let idx in getEdges) {
+            saveJson.push(getEdges[idx]);
+        }
+    }
+    workflowData.value = saveJson;
+    workflowSave();
+}
+
+const saveFiles = (file: any = undefined) => {
+    if (file) {
+        uploadFiles.value.push(file);
+    }
+    workflowSave();
+}
+
+///////////////////////////////////
+/// 워크플로우 기본 기능 구현 로직 ///
+///////////////////////////////////
+import {nextTick, onMounted, watch} from "vue";
+import {VueFlow, useVueFlow} from '@vue-flow/core'
 import {Background} from '@vue-flow/background'
 import {MiniMap} from '@vue-flow/minimap'
 import {Controls} from '@vue-flow/controls'
 
 const {findNode, onConnect, addEdges, addNodes, project, vueFlowRef, toObject} = useVueFlow();
 
-// 워크플로우 커스텀 기능
-import CustomNode from './CustomNode.vue'
+import CustomNode from "./CustomNode.vue";
 import CustomEdge from './CustomEdge.vue'
 
 import OperatorDataTransfer, * as workflow from './ts/Workflow';
-import AttributeHandler from './ts/AttributeHandler';
+import {ViewportTransform} from "@vue-flow/core/dist/types/zoom";
+import {Attributes} from "~/composables/WorkflowNode";
 
-const attributeHandler = new AttributeHandler();
 const operatorListActive: globalThis.Ref<boolean> = ref(true);
 
-const emit = defineEmits(["toggle-drawer"]);
-const DEFINE: any = {
-    WORKFLOW_SAVE_DATA: "getWorkflowJson"
-}
-
 interface Operators {
-    "operatorName": string,
-    "attributes": any
+    operatorName: string,
+    attributes: any
 }
 
 interface Props {
-    setWorkflowJson: any,
-    operators: [Operators]
+    workflowId: string,
+    operators: [Operators],
+    workflow: any
 };
 
 const props = withDefaults(defineProps<Props>(), {});
 const propsOperatorExpand = ref([true, false]);
-const enabled = ref("enabled");
-
-const save = () => {
-    emit(DEFINE.WORKFLOW_SAVE_DATA, toObject());
-    attributeHandler.attributesOff();
-}
-
-const close = () => {
-    attributeHandler.attributesOff();
-}
+const workflowData: globalThis.Ref<any> = ref([]);
+const uploadFiles: globalThis.Ref<any> = ref([]);
+const vueFlowSetting: globalThis.Ref<ViewportTransform> = ref({
+    x: 0,
+    y: 0,
+    zoom: 2
+});
 
 onConnect((params: any) => {
     let edge = workflow.createEdge(params);
     addEdges([edge]);
-    save();
+    saveJson();
 });
 
 const onDragStart = (event: any, nodeCategory: string, nodeAttributes: any) => {
@@ -132,10 +201,12 @@ const onDragOver = (event: any) => {
     }
 }
 
-const onDrop = (event: any) => {
+const onDrop = async (event: any) => {
+    const operatorKey = new Date().getTime();
     const operatorName = event.dataTransfer?.getData("operatorName");
     const operatorLabel = event.dataTransfer?.getData("operatorLabel");
     const operatorAttributes = event.dataTransfer?.getData("operatorAttributes");
+    const nodeId = "WEO_" + operatorKey;
 
     const {left, top} = vueFlowRef.value.getBoundingClientRect();
 
@@ -145,47 +216,67 @@ const onDrop = (event: any) => {
     })
 
     let jsonOperatorAttributes = JSON.parse(operatorAttributes);
-    let attributes: any = {};
+    let attributes: globalThis.Ref<Attributes> = ref({});
     for (let key in jsonOperatorAttributes) {
+        let type = jsonOperatorAttributes[key]["type"];
         let value = "";
-        if (jsonOperatorAttributes[key]["value"]) {
+        let hidden = jsonOperatorAttributes[key]["hidden"];
+        if (jsonOperatorAttributes[key]["value"] || typeof jsonOperatorAttributes[key]["value"] === 'boolean') {
             value = jsonOperatorAttributes[key]["value"];
         }
-        attributes[key] = value;
+
+        attributes.value[key] = {
+            type: ref(type),
+            hidden: ref(hidden),
+            value: ref(value)
+        };
+    }
+
+    // operator attribute에서 select 일 때, options 정보가 고정값이 아닌 URL 에서 가져오는 링크인 경우
+    // URL 링크에서 목록을 그때마다 조회해서 options 값 로딩 처리
+    for (let key1 in jsonOperatorAttributes) {
+        for (let key2 in jsonOperatorAttributes[key1]) {
+
+            // SelectBox 인 경우에만 아래 로직 수행
+            if (key2 === "type" && jsonOperatorAttributes[key1][key2] === "select") {
+
+                // 데이터를 URL에서 받아오는 경우에만 아래 로직 수행
+                if (jsonOperatorAttributes[key1]["options"]["type"] === "url") {
+
+                    let method = jsonOperatorAttributes[key1]["options"]["method"];
+                    let url = jsonOperatorAttributes[key1]["options"]["data"];
+
+                    let data: any = "";
+                    if (method.toLowerCase() === "get") {
+                        data = await restAPI.get(url);
+                    }
+                    if (!data) {
+                        continue;
+                    }
+
+                    // Select 박스 Options 채우기
+                    jsonOperatorAttributes[key1]["options"]["data"] = [];
+                    for (let idx in data.result.connections) {
+                        let connectionType = jsonOperatorAttributes[key1]["options"]["connection_type"];
+                        if (data.result.connections[idx].conn_type.toLowerCase() != connectionType.toLowerCase()) {
+                            continue;
+                        }
+
+                        let connectionId = data.result.connections[idx].connection_id;
+                        jsonOperatorAttributes[key1]["options"]["data"].push(connectionId);
+                    }
+                }
+                attributes.value[key1]["options"] = jsonOperatorAttributes[key1]["options"]["data"];
+            }
+        }
     }
 
     const newNode = {
-        id: "dndnode_" + new Date().getTime(),
+        id: nodeId,
         position: position,
         type: 'toolbar',
-        operatorName: `${operatorName}`,
         label: `${operatorLabel}`,
-        attributes: attributes,
-        events: {
-            doubleClick: () => {
-                // 이미 속성 수정 팝업이 띄워져 있는 경우
-                if (attributeHandler.attributesState()) {
-                    // 팝업 경고창 띄우기
-                    attributeHandler.warningAlertOn()
-
-                    // 3초후 팝업 경고창 닫기
-                    setTimeout(() => {
-                        attributeHandler.warningAlertOff()
-                    }, 3000);
-                    return;
-                }
-
-                let saveAttribute: any = {
-                    operatorName: operatorName,
-                    value: attributes,
-                    view: jsonOperatorAttributes
-                }
-                workflow.setOperatorDetailInfo(saveAttribute);
-
-                // 속성 수정 팝업 띄우기
-                attributeHandler.attributesOn();
-            }
-        }
+        attributes: attributes
     }
     addNodes([newNode])
 
@@ -207,7 +298,7 @@ const onDrop = (event: any) => {
         )
     })
 
-    save();
+    saveJson();
 }
 </script>
 
@@ -223,12 +314,14 @@ const onDrop = (event: any) => {
     height: 45px;
     padding: 0 0 0 0;
 }
+
 .operator-label {
     float: left;
     width: 10px;
     height: 100%;
     background: #ff7878;
 }
+
 .operator-node {
     font-size: 10pt;
     font-weight: normal;
@@ -236,6 +329,7 @@ const onDrop = (event: any) => {
     text-align: center;
     padding-top: 15px;
 }
+
 #alert-warning {
     text-align: center;
     font-weight: bold;
