@@ -1,12 +1,6 @@
 <template>
   <div>
-    <div class="row">
-      <va-navbar color="backgroundPrimary">
-        <template #left>
-          <PageTitle :pageTitle="pageTitle"/>
-        </template>
-      </va-navbar>
-    </div>
+    <PageToolbar :pageTitle="pageTitle" :toolButtons="toolButtons" />
     <div class="row">
       <div class="px-3 flex flex-col md12 xs12 lg12">
         <va-card outlined>
@@ -14,17 +8,9 @@
           <va-card-content>
             <va-input :label="'SearchKeyword'" v-model="filterKeyword" class="mb-4"></va-input>
 
-            <va-data-table
-              :items="datas?.products"
-              :no-data-html="noItemText"
-              :no-data-filtered-html="noItemText"
-              :columns="productsCol"
-              :per-page="pageSize"
-              :current-page="currentPage"
-              :filter="filterKeyword"
-              @filtered="filtered = $event.items;"
-              sticky-header
-            >
+            <va-data-table :items="datas?.products" :no-data-html="noItemText" :no-data-filtered-html="noItemText"
+              :columns="productsCol" :per-page="pageSize" :current-page="currentPage" :filter="filterKeyword"
+              @filtered="filtered = $event.items;" sticky-header>
               <template #cell(detail)="{ rowIndex, rowData }">
                 <div>
                   <va-button size="small" class="px-2" @click="getDetail(rowData)">확인</va-button>
@@ -35,29 +21,31 @@
                 <tr>
                   <td colspan="10">
                     <div class="page-view">
-                      <va-pagination 
-                        v-model="currentPage" 
-                        :pages="pagenationView(pageSize, datas?.products, filtered)"
-                        :visible-pages="5"
-                        gapped
-                      />
+                      <va-pagination v-model="currentPage" :pages="pagenationView(pageSize, datas?.products, filtered)"
+                        :visible-pages="5" gapped />
                     </div>
                   </td>
                 </tr>
-              </template> 
+              </template>
 
             </va-data-table>
           </va-card-content>
         </va-card>
       </div>
     </div>
-  </div> 
+  </div>
 </template>
 
 <script setup lang="ts">
 import { productsCol } from '~~/composables/colums';
+import { toolButtonSample } from '~~/assets/data/toolButton'
+import PageToolbar from '~~/components/PageToolBar.vue'
 
-const pageTitle = ref('Cluster Nodes')
+
+
+
+const pageTitle = ref('datatable')
+const toolButtons = ref(toolButtonSample);
 
 const currentPage = ref(1)
 const filterKeyword = ref("")
