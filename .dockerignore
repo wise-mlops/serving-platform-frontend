@@ -1,0 +1,12 @@
+.idea
+.git
+.gitignore
+.dockerignore
+*.log
+.nuxt
+build
+dist
+node_modules
+.DS_Store
+Dockerfile
+docs

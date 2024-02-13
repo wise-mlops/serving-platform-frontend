@@ -123,8 +123,6 @@
 
 <script setup lang="ts">
 import {VaButton, VaButtonGroup} from "vuestic-ui";
-import {getLog, getResult} from "~/components/workflow/ts/NodeHandler";
-import {defineEmits} from "vue";
 const emit = defineEmits(["toggle-drawer"]);
 
 interface Props {
