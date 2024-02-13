@@ -45,9 +45,8 @@
 </template>
 
 <script lang="ts" setup>
-import {Attributes} from "~/composables/WorkflowNode";
+import {type Attributes} from "~/composables/WorkflowNode";
 import {Handle, Position} from '@vue-flow/core'
-import {max} from "rxjs";
 
 interface Props {
     id: string,

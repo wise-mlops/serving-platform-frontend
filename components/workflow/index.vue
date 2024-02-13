@@ -51,7 +51,6 @@
 
 <script setup lang="ts">
 import {restAPI} from '~/composables/apis';
-import {defineEmits} from "vue";
 const emit = defineEmits(["toggle-drawer"]);
 
 onMounted( () => {
@@ -139,7 +138,7 @@ const saveFiles = (file: any = undefined) => {
 /// 워크플로우 기본 기능 구현 로직 ///
 ///////////////////////////////////
 import {nextTick, onMounted, watch} from "vue";
-import {VueFlow, useVueFlow} from '@vue-flow/core'
+import {VueFlow, useVueFlow, type ViewportTransform} from '@vue-flow/core'
 import {Background} from '@vue-flow/background'
 import {MiniMap} from '@vue-flow/minimap'
 import {Controls} from '@vue-flow/controls'
@@ -149,9 +148,9 @@ const {findNode, onConnect, addEdges, addNodes, project, vueFlowRef, toObject} =
 import CustomNode from "./CustomNode.vue";
 import CustomEdge from './CustomEdge.vue'
 
-import OperatorDataTransfer, * as workflow from './ts/Workflow';
-import {ViewportTransform} from "@vue-flow/core/dist/types/zoom";
-import {Attributes} from "~/composables/WorkflowNode";
+import type OperatorDataTransfer from './ts/Workflow';
+import type * as workflow from './ts/Workflow';
+import {type Attributes} from "~/composables/WorkflowNode";
 
 const operatorListActive: globalThis.Ref<boolean> = ref(true);
 
