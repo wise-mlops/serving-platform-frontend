@@ -1,7 +1,7 @@
 export default defineAppConfig({
-  title: 'Hello Nuxt!!!!',
-  logoTitle: 'LOGO TITLE',
-  apiServer: 'https://dummyjson.com/',
+  title: 'This is Serving Platform',
+  logoTitle: 'Serving Platform',
+  apiServer: 'http://main.api.kserve.labs.wisenut.com/',
   theme: {
     dark: true,
     colors: {

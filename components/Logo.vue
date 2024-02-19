@@ -5,7 +5,7 @@
         <img v-if="$props.url" :src="$props.url" :alt="$props.alt" :title="$props.title"> 
         <img v-else src="~/assets/img/logo.png" :alt="$props.alt" :title="$props.title"/>
         <va-list-item-label>
-          <h1>{{ $props.title }}</h1>
+          <b>{{ $props.title }}</b>
         </va-list-item-label>
       </va-list-item>
     </va-list>
