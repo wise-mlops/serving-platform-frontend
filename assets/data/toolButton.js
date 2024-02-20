@@ -3,7 +3,7 @@ export const toolButtonSample = [
     id: "add",
     title: "add",
     icon: "add",
-    // path: "service/create",
+    path: "service/add",
   },
   // {
   //   id: "modify",

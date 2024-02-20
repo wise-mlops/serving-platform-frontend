@@ -42,9 +42,6 @@ const pageMove = (path: string) => {
   if (path) {
     router.push(path)
   }
-  else {
-    alert("추가 페이지 이동 예정!")
-  }
 }
 
 </script>
