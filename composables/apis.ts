@@ -9,15 +9,16 @@ export const restAPI = {
 
     return rst.value;
   },
-  post: async (url: string, baseUrl: string = config.apiServer, body: {} = {}) => {
+  post: async (url: string, body: {} = {}, baseUrl: string = config.apiServer) => {
     let { data: rst, error } = await useFetch<APIResponseType>(url, {
       method: 'POST',
-      baseURL: baseUrl
+      baseURL: baseUrl,
+      body: body
     });
 
     return rst.value;
   },
-  put: async (url: string, baseUrl: string = config.apiServer, body: {} = {}) => {
+  put: async (url: string, body: {} = {}, baseUrl: string = config.apiServer) => {
     let { data: rst, error } = await useFetch<APIResponseType>(url, {
       method: 'PUT',
       baseURL: baseUrl
