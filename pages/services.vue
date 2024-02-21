@@ -93,8 +93,9 @@ onMounted(async () => {
   try {
     await getList();
   } catch (error) {
-    console.error('Error loading data:', error)
+    console.error('Error loading data:', error);
   }
+  isValid.value = true;
 })
 
 /**
@@ -103,10 +104,15 @@ onMounted(async () => {
  */
 const handleClick = (event: any) => {
   const cellIndex = event.event.target.cellIndex;
-  if (cellIndex < 4) {
-    const name = event.item.name;
-    alert(`${name} 상세보기 페이지 이동 예정!`)
-    // navigateTo(`/service/${name}`)
+  const status = event.item.status;
+  if (status === 'Unknown') {
+    alert('방금 생성된 Inference Service입니다. 잠시만 기다려주세요.');
+  }
+  else {
+    if (cellIndex < 4) {
+      const name = event.item.name;
+      navigateTo(`/service/${name}`);
+    }
   }
 }
 

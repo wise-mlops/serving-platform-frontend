@@ -3,11 +3,11 @@ export default defineNuxtConfig({
   ssr: false,
   app: {
     head: {
-      charset:'utf-8',
+      charset: 'utf-8',
       viewport: 'initial-scale=1',
-      title: '[와이즈넛] 관리도구 샘플 화면 프로젝트',
-      meta:[ 
-        { name: 'description', content: 'sample description'}
+      title: 'Serving Platform Webpage',
+      meta: [
+        { name: 'description', content: 'sample description' }
       ]
     },
     pageTransition: {
