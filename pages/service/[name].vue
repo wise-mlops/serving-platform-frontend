@@ -36,7 +36,7 @@
                                             </div>
                                             <VaListItemSection class="details-right">
                                                 <VaListItemLabel v-if="key === 'Status'">
-                                                    <h6 class="va-h6" v-if="OverviewData.Info[key] === 'True'">
+                                                    <h6 class="va-h6 status-text" v-if="OverviewData.Info[key] === 'True'">
                                                         <VaPopover message="Status is deduced from the Ready Condition"
                                                             class=" row align-center justify-left" placement="left-bottom"
                                                             color="#154ec19e">
@@ -44,7 +44,7 @@
                                                         </VaPopover>
                                                     </h6>
                                                     <h6 v-else-if="OverviewData.Info[key] === 'False'"
-                                                        class="va-h6 row align-center">
+                                                        class="va-h6 status-text row align-center">
                                                         <VaPopover message="Status is deduced from the Ready Condition"
                                                             placement="left-bottom" color="#154ec19e">
                                                             <VaIcon name="warning" color="warning" />
@@ -95,14 +95,14 @@
                                         </div>
                                         <VaListItemSection>
                                             <VaListItemLabel v-if="key == 'Status'">
-                                                <h6 class="va-h6" v-if="DetailsData[category][key] === 'True'">
+                                                <h6 class="va-h6 status-text" v-if="DetailsData[category][key] === 'True'">
                                                     <VaPopover message="Status is deduced from the Ready Condition"
                                                         class=" row align-center" placement="left-bottom" color="#154ec19e">
                                                         <VaIcon name="check_circle" color="success" />&nbspReady
                                                     </VaPopover>
                                                 </h6>
                                                 <h6 v-else-if="DetailsData[category][key] === 'False'"
-                                                    class="va-h6 row align-center">
+                                                    class="va-h6 status-text row align-center">
                                                     <VaPopover message="Status is deduced from the Ready Condition"
                                                         placement="left-bottom" color="#154ec19e">
                                                         <VaIcon name="warning" color="warning" />
@@ -244,5 +244,9 @@ const changeTime = (timeStamp: string) => {
 
 .va-list-item-label>.va-h6 {
     color: #797373;
+}
+
+.status-text {
+    width: 90px;
 }
 </style>
