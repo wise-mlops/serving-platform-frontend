@@ -38,7 +38,12 @@
                                         :options="modelFormatOptions" />
                                 </VaListItem>
                                 <VaListItem class="create-item">
-                                    <VaInput class="input-value" v-model="formStorageUri" label="Storage URI" disabled />
+                                    <VaSelect v-model="selectedBucket" label="Bucket" :options="bucketList" searchable
+                                        highlight-matched-text />
+                                </VaListItem>
+                                <VaListItem class="create-item">
+                                    <VaSelect v-model="formStorageUri" label="Storage URI" :options="storageUriList"
+                                        :disabled="!selectedBucket" searchable highlight-matched-text />
                                 </VaListItem>
                             </VaList>
                         </VaCardContent>
@@ -66,30 +71,59 @@ const modelFormatOptions = [
     "pytorch",
     "xgboost",
     "pmml",
+    "spark-pmml",
     "lightgbm",
+    "paddle",
+    "mlflow"
 ]
-
-const modelStorageUri = {
-    sklearn: "gs://kfserving-examples/models/sklearn/1.0/model",
-    tensorflow: "gs://kfserving-examples/models/tensorflow/flowers",
-    pytorch: "gs://kfserving-examples/models/torchserve/image_classifier/v2",
-    xgboost: "gs://kfserving-examples/models/xgboost/iris",
-    pmml: "gs://kfserving-examples/models/pmml",
-    lightgbm: "gs://kfserving-examples/models/lightgbm/v2/iris",
-}
 
 const formName = ref('');
 const formNamespace = ref('kubeflow-user-example-com');
 const formModelFormat = ref('');
+const selectedBucket = ref('');
+const bucketInfo = ref({});
 const formStorageUri = ref('');
 
 const formNameValid = computed(() => {
     return regex.test(formName.value);
 })
 
-watch(formModelFormat, () => {
-    const mF = formModelFormat.value;
-    formStorageUri.value = modelStorageUri[mF];
+const bucketList = ref([]);
+const storageUriList = ref([]);
+
+onMounted(async () => {
+    try {
+        const response = await restAPI.get(`/bucket`);
+        if (response) {
+            if (response.code === SuccessResponseCode) {
+                bucketList.value = response.result.map(item => item._name);
+            }
+            else {
+                console.log(response.message);
+            }
+        }
+    } catch (error) {
+        console.error('Error loading data:', error);
+    }
+})
+
+watch(selectedBucket, async () => {
+    formStorageUri.value = '';
+    if (selectedBucket.value in bucketInfo.value) {
+        storageUriList.value = bucketInfo.value[selectedBucket.value];
+    }
+    else {
+        const response = await restAPI.get(`/bucket/object/${selectedBucket.value}?recursive=true`);
+        if (response) {
+            if (response.code === SuccessResponseCode) {
+                storageUriList.value = response.result.map(item => item._object_name);
+                bucketInfo.value[selectedBucket.value] = storageUriList.value;
+            }
+            else {
+                console.log(response.message);
+            }
+        }
+    }
 })
 
 /**
@@ -108,7 +142,7 @@ const submit = async () => {
         inference_service_spec: {
             predictor: {
                 model_spec: {
-                    storage_uri: formStorageUri.value,
+                    storage_uri: 's3://' + formStorageUri.value,
                     model_format: {
                         name: formModelFormat.value
                     }
