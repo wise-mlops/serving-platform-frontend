@@ -14,7 +14,7 @@
                   {{ changeTime(rowData) }}
                 </template>
                 <template #cell(test)="{ rowIndex, rowData }">
-                  <VaButton size="small" class="px-2" @click="goTest(rowData.name)">TEST</VaButton>
+                  <VaButton size="small" class="px-2" @click="goTest(rowData.name, rowData.modelFormat)">TEST</VaButton>
                 </template>
                 <template #cell(remove)="{ rowIndex, rowData }">
                   <VaButton size="small" class="px-2" @click="removeItem(rowData.name)">삭제</VaButton>
@@ -38,6 +38,7 @@ import { useDebouncedRef } from '~~/composables/common';
 
 const pageTitle = ref('Inference Services');
 const toolButtons = ref(toolButtonSample);
+const router = useRouter();
 
 const currentPage = ref(1);
 const filterKeyword = useDebouncedRef("", 1000);
@@ -105,11 +106,11 @@ onMounted(async () => {
 const handleClick = (event: any) => {
   const cellIndex = event.event.target.cellIndex;
   const status = event.item.status;
-  if (status === 'Unknown') {
-    alert('방금 생성된 Inference Service입니다. 잠시만 기다려주세요.');
-  }
-  else {
-    if (cellIndex < 4) {
+  if (cellIndex < 4) {
+    if (status === 'Unknown') {
+      alert('방금 생성된 Inference Service입니다. 잠시만 기다려주세요.');
+    }
+    else {
       const name = event.item.name;
       navigateTo(`/service/${name}`);
     }
@@ -122,9 +123,8 @@ const changeTime = (rowData: any) => {
   return dateTime
 }
 
-const goTest = async (name: string) => {
-  alert(`${name} 테스트 페이지 이동 예정!`)
-  // navigateTo(`/test/${name}`)
+const goTest = async (name: string, modelFormat: string) => {
+  router.push({ path: `/test/${name}`, query: { model_format: modelFormat } });
 }
 
 const removeItem = async (name: string) => {
