@@ -5,16 +5,26 @@
       <div class="px-3 flex flex-col md12 xs12 lg12">
         <VaInnerLoading :loading="!isValid">
           <VaCard outlined class="services-card">
-            <VaCardTitle>{{ pageTitle }}</VaCardTitle>
+            <VaCardTitle />
             <VaCardContent class="services-card-content">
               <VaInput :label="'SearchKeyword'" v-model="filterKeyword" class="mb-4" style="width: 300px" />
               <VaDataTable class="services-card-table" :items="datas" :columns="servicesCol" :filter="filterKeyword"
                 @filtered="filtered = $event.items;" sticky-header clickable hoverable @row:click="handleClick">
+                <template #cell(status)="{ rowIndex, rowData }">
+                  <VaPopover message="InferenceService is Ready" placement="left-bottom" color="#154ec19e"
+                    v-if="rowData.status === 'True'">
+                    <VaIcon name="check_circle" color="success" />
+                  </VaPopover>
+                  <VaPopover :message=popoverMsg(rowData.name) placement="left-bottom" color="#154ec19e" v-else>
+                    <VaProgressCircle :size="20" :thickness="0.3" indeterminate style="display: inline-block;" />
+                  </VaPopover>
+                </template>
                 <template #cell(creationTimestamp)="{ rowIndex, rowData }">
                   {{ changeTime(rowData) }}
                 </template>
                 <template #cell(test)="{ rowIndex, rowData }">
-                  <VaButton size="small" class="px-2" @click="goTest(rowData.name, rowData.modelFormat)">TEST</VaButton>
+                  <VaButton size="small" class="px-2" @click="goTest(rowData.name, rowData.status, rowData.modelFormat)">
+                    TEST</VaButton>
                 </template>
                 <template #cell(remove)="{ rowIndex, rowData }">
                   <VaButton size="small" class="px-2" @click="removeItem(rowData.name)">삭제</VaButton>
@@ -54,6 +64,10 @@ watch(filterKeyword, async () => {
   loadedList.value = {};
   await getList();
 })
+
+const popoverMsg = (name: string) => {
+  return `Configuration "${name}-predictor" does not have any ready Revision.`
+}
 
 /**
  * Inference Service의 리스트를 가져오는 함수입니다.
@@ -108,7 +122,8 @@ const handleClick = (event: any) => {
   const status = event.item.status;
   if (cellIndex < 4) {
     if (status === 'Unknown') {
-      alert('방금 생성된 Inference Service입니다. 잠시만 기다려주세요.');
+      alert(`Inference Service를 생성 중입니다.
+잠시 후 새로고침을 해주세요.`);
     }
     else {
       const name = event.item.name;
@@ -123,8 +138,13 @@ const changeTime = (rowData: any) => {
   return dateTime
 }
 
-const goTest = async (name: string, modelFormat: string) => {
-  router.push({ path: `/test/${name}`, query: { model_format: modelFormat } });
+const goTest = async (name: string, status: string, modelFormat: string) => {
+  if (status === 'True') {
+    router.push({ path: `/test/${name}`, query: { model_format: modelFormat } });
+  }
+  else {
+    alert('Inference Service의 상태가 Ready일 때만 테스트 가능합니다.');
+  }
 }
 
 const removeItem = async (name: string) => {

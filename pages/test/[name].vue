@@ -11,7 +11,8 @@
             <VaCard outlined class="flex test-card">
                 <VaCardTitle>Input</VaCardTitle>
                 <VaCardContent class="test-card-content">
-                    <VaTextarea v-model="inputValue" class="test-textarea" autosize placeholder="모델에 맞게 입력해주세요." />
+                    <VaTextarea v-model="inputValue" class="test-textarea" autosize placeholder="모델에 맞게 입력해주세요."
+                        :maxRows="1" />
                 </VaCardContent>
             </VaCard>
             <VaButton icon-right="arrow_forward" icon-color="#ffffff50" class="ml-2 mr-2 test-btn" @click="getResult">
@@ -19,7 +20,8 @@
             <VaCard outlined class="test-card">
                 <VaCardTitle>Output</VaCardTitle>
                 <VaCardContent class="test-card-content">
-                    <pre>{{ outputValue }}</pre>
+                    <VaTextarea v-model="outputValue" class="test-textarea" readonly autosize
+                        placeholder="compute 버튼을 눌러주세요." :maxRows="1" />
                 </VaCardContent>
             </VaCard>
         </div>
@@ -29,6 +31,12 @@
 <script setup>
 import { SuccessResponseCode } from '~/assets/const/HttpResponseCode';
 const route = useRoute();
+
+definePageMeta({
+    middleware: [
+        'service',
+    ],
+});
 
 const pageTitle = ref('Inference Service 테스트')
 
@@ -47,7 +55,7 @@ const getResult = async () => {
         const response = await restAPI.post(`/kserve/kubeflow-user-example-com/${route.params.name}/infer?model_format=${modelFormat}`, inputValue.value);
         if (response) {
             if (response.code === SuccessResponseCode) {
-                outputValue.value = response.result;
+                outputValue.value = JSON.stringify(response.result, null, 4);
             }
             else {
                 console.log(response.message);
@@ -91,5 +99,6 @@ const getResult = async () => {
 pre {
     font-size: large;
     line-height: normal;
+    overflow: auto;
 }
 </style>
