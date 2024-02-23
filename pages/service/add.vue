@@ -10,8 +10,13 @@
         <div class="px-3 flex flex-col md12 xs12 lg12">
             <VaInnerLoading :loading="!isValid">
                 <VaCard class="create-card">
-                    <VaCardTitle>{{ pageTitle }}</VaCardTitle>
-                    <VaCardBlock horizontal class="create-content">
+                    <VaCardTitle />
+                    <!-- <VaButton preset="primary" @click="changeMode()">변경</VaButton>
+                    <VaCardBlock horizontal class="create-content" v-if="mode === 'text'">
+                        <VaCardContent>
+                        </VaCardContent>
+                    </VaCardBlock> -->
+                    <VaCardBlock horizontal class="create-content" v-if="mode === 'select'">
                         <VaCardContent class="create-left">
                             <VaList>
                                 <VaListItem class="create-item">
@@ -30,26 +35,22 @@
                             <VaList class="create-right-list">
                                 <VaListItem class="create-item">
                                     <VaInput class="input-value"
-                                        :rules="[(value) => (value && regex.test(value)) || regexExp]" v-model="formName"
-                                        label="name" />
+                                        :rules="[(value) => (value && regexName.test(value)) || regexNameExp]"
+                                        v-model="formName" />
                                 </VaListItem>
                                 <VaListItem class="create-item">
-                                    <VaSelect v-model="formModelFormat" label="Model Format"
-                                        :options="modelFormatOptions" />
+                                    <VaSelect v-model="formModelFormat" :options="modelFormatOptions" />
                                 </VaListItem>
                                 <VaListItem class="create-item">
-                                    <VaSelect v-model="selectedBucket" label="Bucket" :options="bucketList" searchable
-                                        highlight-matched-text />
-                                </VaListItem>
-                                <VaListItem class="create-item">
-                                    <VaSelect v-model="formStorageUri" label="Storage URI" :options="storageUriList"
-                                        :disabled="!selectedBucket" searchable highlight-matched-text />
+                                    <VaInput class="input-value"
+                                        :rules="[(value) => (value && regexUri.test(value)) || regexUriExp]"
+                                        v-model="formStorageUri" />
                                 </VaListItem>
                             </VaList>
                         </VaCardContent>
                     </VaCardBlock>
                     <div class="button-set">
-                        <VaButton :disabled="!isValid || !isText || !formNameValid" @click="submit()" class="ml-3 mr-3">등록
+                        <VaButton :disabled="!isValid || !isText || !formValid" @click="submit()" class="ml-3 mr-3">등록
                         </VaButton>
                         <VaButton preset="primary" to="/services" :disabled="!isValid" class="ml-3 mr-3">취소</VaButton>
                     </div>
@@ -59,23 +60,14 @@
     </div>
 </template>
 <script setup>
-import { SuccessResponseCode, DuplicatedErrorResponseCode } from '~~/assets/const/HttpResponseCode'
+import { SuccessResponseCode, DuplicatedErrorResponseCode } from '~~/assets/const/HttpResponseCode';
+import { modelFormatOptions } from "~/assets/data/model";
 
 const pageTitle = ref('Inference Service 등록')
-const regex = /^[a-z]([-a-z0-9]*[a-z])?$/;  // 영어 소문자, 숫자, -만 허용
-const regexExp = "이름은 영어 소문자로 시작하고 끝나며, 그 안에는 소문자, 숫자, -만 허용됩니다.";
-
-const modelFormatOptions = [
-    "sklearn",
-    "tensorflow",
-    "pytorch",
-    "xgboost",
-    "pmml",
-    "spark-pmml",
-    "lightgbm",
-    "paddle",
-    "mlflow"
-]
+const regexName = /^[a-z]([-a-z0-9]*[a-z])?$/;  // 영어 소문자, 숫자, -만 허용
+const regexUri = /(file|s3|gs|http)?:\/\/.*/;  // ["file://", "s3://", "gs://", "http://"] 중 하나로 시작
+const regexNameExp = "이름은 영어 소문자로 시작하고 끝나며, 그 안에는 소문자, 숫자, -만 허용됩니다.";
+const regexUriExp = "file:// , s3:// , gs:// , http:// 중 하나로 시작해야 합니다.";
 
 const formName = ref('');
 const formNamespace = ref('kubeflow-user-example-com');
@@ -83,10 +75,20 @@ const formModelFormat = ref('');
 const selectedBucket = ref('');
 const bucketInfo = ref({});
 const formStorageUri = ref('');
+const mode = ref('select');
 
-const formNameValid = computed(() => {
-    return regex.test(formName.value);
+const formValid = computed(() => {
+    return regexName.test(formName.value) && regexUri.test(formStorageUri.value);
 })
+
+const changeMode = () => {
+    if (mode.value === 'select') {
+        mode.value = 'text';
+    }
+    else if (mode.value === 'text') {
+        mode.value = 'select';
+    }
+}
 
 const bucketList = ref([]);
 const storageUriList = ref([]);
@@ -131,7 +133,7 @@ watch(selectedBucket, async () => {
  */
 const isValid = ref(true);
 const isText = computed(() => {
-    return formName.value.length > 0 && formModelFormat.value.length > 0
+    return formName.value.length > 0 && formModelFormat.value.length > 0 && formStorageUri.value.length > 0
 })
 
 const submit = async () => {
@@ -142,13 +144,15 @@ const submit = async () => {
         inference_service_spec: {
             predictor: {
                 model_spec: {
-                    storage_uri: 's3://' + formStorageUri.value,
+                    storage_uri: `s3://${selectedBucket.value}/` + formStorageUri.value,
                     model_format: {
                         name: formModelFormat.value
                     }
-                }
+                },
+                service_account_name: "kserve-sa"
             }
-        }
+        },
+        sidecar_inject: false
     }
     const response = await restAPI.post(`/kserve`, data);
     if (response) {
