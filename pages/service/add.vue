@@ -10,45 +10,28 @@
         <div class="px-3 flex flex-col md12 xs12 lg12">
             <VaInnerLoading :loading="!isValid">
                 <VaCard class="create-card">
-                    <VaCardTitle />
                     <!-- <VaButton preset="primary" @click="changeMode()">변경</VaButton>
                     <VaCardBlock horizontal class="create-content" v-if="mode === 'text'">
                         <VaCardContent>
                         </VaCardContent>
                     </VaCardBlock> -->
-                    <VaCardBlock horizontal class="create-content" v-if="mode === 'select'">
-                        <VaCardContent class="create-left">
-                            <VaList>
-                                <VaListItem class="create-item">
-                                    <h1>Name</h1>
-                                </VaListItem>
-                                <VaListItem class="create-item">
-                                    <h1>Model Format </h1>
-                                </VaListItem>
-                                <VaListItem class="create-item">
-                                    <h1>Storage URI </h1>
-                                </VaListItem>
-                            </VaList>
-                        </VaCardContent>
-                        <VaDivider vertical />
-                        <VaCardContent class="create-right">
-                            <VaList class="create-right-list">
-                                <VaListItem class="create-item">
-                                    <VaInput class="input-value"
-                                        :rules="[(value) => (value && regexName.test(value)) || regexNameExp]"
-                                        v-model="formName" />
-                                </VaListItem>
-                                <VaListItem class="create-item">
-                                    <VaSelect v-model="formModelFormat" :options="modelFormatOptions" />
-                                </VaListItem>
-                                <VaListItem class="create-item">
-                                    <VaInput class="input-value"
-                                        :rules="[(value) => (value && regexUri.test(value)) || regexUriExp]"
-                                        v-model="formStorageUri" />
-                                </VaListItem>
-                            </VaList>
-                        </VaCardContent>
-                    </VaCardBlock>
+                    <VaCardContent class="create-content" v-if="mode === 'select'">
+                        <VaList class="create-content-list">
+                            <VaListItem class="create-item">
+                                <VaInput class="input-value" label="Name"
+                                    :rules="[(value) => (value && regexName.test(value)) || regexNameExp]"
+                                    v-model="formName" />
+                            </VaListItem>
+                            <VaListItem class="create-item">
+                                <VaSelect v-model="formModelFormat" :options="modelFormatOptions" label="Model Format" />
+                            </VaListItem>
+                            <VaListItem class="create-item">
+                                <VaInput class="input-value" label="Storage Uri"
+                                    :rules="[(value) => (value && regexUri.test(value)) || regexUriExp]"
+                                    v-model="formStorageUri" />
+                            </VaListItem>
+                        </VaList>
+                    </VaCardContent>
                     <div class="button-set">
                         <VaButton :disabled="!isValid || !isText || !formValid" @click="submit()" class="ml-3 mr-3">등록
                         </VaButton>
@@ -192,21 +175,11 @@ h1 {
 }
 
 .create-content {
-    height: 86%;
+    height: 92%;
     width: 100%;
 }
 
-.create-left {
-    width: 10%;
-    min-width: 200px;
-}
-
-.create-right {
-    width: 80%;
-    min-width: 200px;
-}
-
-.create-right-list {
+.create-content-list {
     width: 35%;
 }
 
@@ -223,5 +196,9 @@ h1 {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
+}
+
+.va-input-label {
+    font-size: medium;
 }
 </style>

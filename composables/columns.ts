@@ -1,10 +1,10 @@
 export const servicesCol = ref([
-  { label: 'Status', key: 'status', sortable: true, width: '10%' },
-  { label: 'Name', key: 'name', sortable: true, width: '18%' },
-  { label: 'Model Format', key: 'modelFormat', sortable: true, width: '13%' },
+  { label: 'Name', key: 'name', sortable: true, width: '15%' },
+  { label: 'Model Format', key: 'modelFormat', sortable: true, width: '15%' },
   { label: 'Created', key: 'creationTimestamp', sortable: true, width: '10%' },
-  { label: 'Test', key: 'test', sortable: false, width: '5%' },
-  { label: 'Remove', key: 'remove', sortable: false, width: '5%' }
+  { label: 'Status', key: 'status', sortable: true, width: '6%' },
+  { label: 'Test', key: 'test', sortable: false, width: '6%' },
+  { label: 'Remove', key: 'remove', sortable: false, width: '6%' }
 ])
 
 export const overviewCol = ref([
