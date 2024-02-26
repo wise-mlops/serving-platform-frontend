@@ -7,8 +7,17 @@
           <VaCard outlined class="services-card">
             <VaCardTitle />
             <VaCardContent class="services-card-content">
-              <VaInput :label="'SearchKeyword'" v-model="filterKeyword" class="mb-4" style="width: 300px" />
-              <VaDataTable class="services-card-table" :items="datas" :columns="servicesCol" :filter="filterKeyword"
+              <div class="services-card-top" v-if="mode === 'debounce'">
+                <VaSelect v-model="selectedColumn" :options="columnOptions" placeholder="전체" class="select-column" />
+                <VaInput :label="'Search Keyword'" v-model="filterKeyword" class="search-input" />
+              </div>
+              <div class="services-card-top" v-else-if="mode === 'button'">
+                <VaSelect v-model="selectedColumn" :options="columnOptions" placeholder="전체" class="select-column" />
+                <VaInput :label="'Search Keyword'" v-model="filterKeyword" class="search-input"
+                  v-on:keyup.enter="search" />
+                <VaButton class="search-button" @click="search">검색</VaButton>
+              </div>
+              <VaDataTable class="services-card-table" :items="datas" :columns="servicesCol"
                 @filtered="filtered = $event.items;" sticky-header clickable hoverable @row:click="handleClick">
                 <template #cell(status)="{ rowIndex, rowData }">
                   <VaPopover message="InferenceService is Ready" placement="left-bottom" color="#154ec19e"
@@ -51,23 +60,75 @@ const toolButtons = ref(toolButtonSample);
 const router = useRouter();
 
 const currentPage = ref(1);
-const filterKeyword = useDebouncedRef("", 1000);
 const datas = ref([]);
 const filtered = ref("");
 const totalPage = ref(1);
 const pageSize = 10;
 const loadedList = ref({});
 const isValid = ref(true);
+const selectedColumn = ref("전체")
 
-watch(filterKeyword, async () => {
+
+const columnOptions = [
+  "전체",
+  "Status",
+  "Name",
+  "Model Format",
+  "Created"
+]
+
+const columnOptionValue = {
+  Status: "status",
+  Name: "name",
+  "Model Format": "modelFormat",
+  Created: "creationTimestamp"
+}
+
+/**
+ * 방법 1. 검색창 내의 변화를 감지하여 입력값과 일치하는 리스트를 가져옵니다.
+ * 검색 버튼 이용 시(방법 2 이용) 주석 처리 필요.
+ */
+// const mode = "debounce";
+// const filterKeyword = useDebouncedRef("", 1000);
+// watch(selectedColumn, async () => {
+//   if (filterKeyword.value) {
+//     currentPage.value = 1;
+//     loadedList.value = {};
+//     await getList();
+//   }
+// })
+// watch(filterKeyword, async () => {
+//   currentPage.value = 1;
+//   loadedList.value = {};
+//   await getList();
+// })
+
+/**
+ * 방법 2. 검색 버튼을 이용하여 입력값과 일치하는 리스트를 가져옵니다.
+ * 검색 버튼 이용하지 않을 시(방법 1 이용) 주석 처리 필요.
+ */
+const mode = "button";
+const filterKeyword = ref("");
+const search = async () => {
   currentPage.value = 1;
   loadedList.value = {};
   await getList();
-})
+}
+
 
 const popoverMsg = (name: string) => {
   return `Configuration "${name}-predictor" does not have any ready Revision.`
 }
+
+/**
+ * 10초마다 자동으로 Inference Service의 리스트를 가져옵니다.
+ */
+// setInterval(async () => {
+//   isValid.value = false;
+//   loadedList.value = {};
+//   await getList();
+//   isValid.value = true;
+// }, 10000);
 
 /**
  * Inference Service의 리스트를 가져오는 함수입니다.
@@ -80,7 +141,12 @@ const getList = async () => {
   else {
     let APIurl;
     if (filterKeyword.value) {
-      APIurl = `/kserve?page=${currentPage.value}&search_query=${filterKeyword.value}`;
+      if (selectedColumn.value === '전체') {
+        APIurl = `/kserve?page=${currentPage.value}&search_query=${filterKeyword.value}`;
+      }
+      else {
+        APIurl = `/kserve?page=${currentPage.value}&search_query=${filterKeyword.value}&col_query=${columnOptionValue[selectedColumn.value]}`;
+      }
     }
     else {
       APIurl = `/kserve?page=${currentPage.value}`;
@@ -100,10 +166,9 @@ const getList = async () => {
   isValid.value = true;
 }
 
-watch(currentPage, async () => {
-  await getList();
-})
-
+/**
+ * 페이지가 로드될 때 Inference Service의 리스트를 가져옵니다.
+ */
 onMounted(async () => {
   try {
     await getList();
@@ -111,6 +176,13 @@ onMounted(async () => {
     console.error('Error loading data:', error);
   }
   isValid.value = true;
+})
+
+/**
+ * 페이지의 변화가 있을 때 Inference Service의 리스트를 가져옵니다.
+ */
+watch(currentPage, async () => {
+  await getList();
 })
 
 /**
@@ -179,6 +251,28 @@ const removeItem = async (name: string) => {
   height: 700px;
 }
 
+.services-card-top {
+  display: flex;
+  width: 30%;
+  margin-bottom: 15px;
+}
+
+.select-column {
+  align-self: flex-end;
+  margin-right: 10px;
+  widows: 10px;
+}
+
+.search-input {
+  width: 250px;
+}
+
+.search-button {
+  align-self: flex-end;
+  min-width: 80px;
+  margin-left: 10px;
+}
+
 .services-card-content {
   display: flex;
   flex-direction: column;
@@ -187,5 +281,9 @@ const removeItem = async (name: string) => {
 
 .services-card-table {
   height: 500px !important;
+}
+
+.va-input-label {
+  font-size: medium;
 }
 </style>
