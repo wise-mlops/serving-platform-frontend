@@ -2,6 +2,14 @@ const config = useAppConfig();
 
 export const restAPI = {
   get: async (url: string, baseUrl: string = config.apiServer) => {
+    let data = await $fetch<APIResponseType>(url, {
+      method: 'GET',
+      baseURL: baseUrl
+    });
+
+    return data;
+  },
+  useGet: async (url: string, baseUrl: string = config.apiServer) => {
     let { data: rst, error } = await useFetch<APIResponseType>(url, {
       method: 'GET',
       baseURL: baseUrl
@@ -10,6 +18,15 @@ export const restAPI = {
     return rst.value;
   },
   post: async (url: string, body: {} = {}, baseUrl: string = config.apiServer) => {
+    let data = await $fetch<APIResponseType>(url, {
+      method: 'POST',
+      baseURL: baseUrl,
+      body: body
+    });
+
+    return data;
+  },
+  usePost: async (url: string, body: {} = {}, baseUrl: string = config.apiServer) => {
     let { data: rst, error } = await useFetch<APIResponseType>(url, {
       method: 'POST',
       baseURL: baseUrl,
@@ -27,6 +44,14 @@ export const restAPI = {
     return rst.value;
   },
   del: async (url: string, baseUrl: string = config.apiServer) => {
+    let data = await $fetch<APIResponseType>(url, {
+      method: 'DELETE',
+      baseURL: baseUrl
+    });
+
+    return data;
+  },
+  useDel: async (url: string, baseUrl: string = config.apiServer) => {
     let { data: rst, error } = await useFetch<APIResponseType>(url, {
       method: 'DELETE',
       baseURL: baseUrl

@@ -10,12 +10,12 @@
         <div class="px-3 flex flex-col md12 xs12 lg12">
             <VaInnerLoading :loading="!isValid">
                 <VaCard class="create-card">
-                    <!-- <VaButton preset="primary" @click="changeMode()">변경</VaButton>
-                    <VaCardBlock horizontal class="create-content" v-if="mode === 'text'">
+                    <!-- <VaButton preset="primary" @click="changeMode('form')">변경</VaButton>
+                    <VaCardBlock horizontal class="create-content" v-if="mode.form">
                         <VaCardContent>
                         </VaCardContent>
                     </VaCardBlock> -->
-                    <VaCardContent class="create-content" v-if="mode === 'select'">
+                    <VaCardContent class="create-content" v-if="!mode.form">
                         <VaList class="create-content-list">
                             <VaListItem class="create-item">
                                 <VaInput class="input-value" label="Name"
@@ -25,10 +25,21 @@
                             <VaListItem class="create-item">
                                 <VaSelect v-model="formModelFormat" :options="modelFormatOptions" label="Model Format" />
                             </VaListItem>
-                            <VaListItem class="create-item">
+                            <VaListItem class="create-item-uri" v-if="!mode.uri">
+                                <div class="flex item-uri">
+                                    <p class="uri-text">STORAGE URI</p>
+                                    <VaFileUpload v-model="uploadedFile" dropzone
+                                        dropZoneText="Drop model file here to upload" type="single" />
+                                </div>
+                            </VaListItem>
+                            <VaListItem class="create-item" v-else-if="mode.uri">
                                 <VaInput class="input-value" label="Storage Uri"
                                     :rules="[(value) => (value && regexUri.test(value)) || regexUriExp]"
                                     v-model="formStorageUri" />
+                            </VaListItem>
+                            <VaListItem class="change-mode-btn">
+                                <VaButton @click="changeMode('uri')" preset="secondary" borderColor="primary" size="small">
+                                    변경 </VaButton>
                             </VaListItem>
                         </VaList>
                     </VaCardContent>
@@ -42,7 +53,7 @@
         </div>
     </div>
 </template>
-<script setup>
+<script setup lang="ts">
 import { SuccessResponseCode, DuplicatedErrorResponseCode } from '~~/assets/const/HttpResponseCode';
 import { modelFormatOptions } from "~/assets/data/model";
 
@@ -55,89 +66,128 @@ const regexUriExp = "file:// , s3:// , gs:// , http:// 중 하나로 시작해�
 const formName = ref('');
 const formNamespace = ref('kubeflow-user-example-com');
 const formModelFormat = ref('');
-const selectedBucket = ref('');
-const bucketInfo = ref({});
+const selectedBucket = ref('test');  // 버킷명 수동으로 변경 필요
 const formStorageUri = ref('');
-const mode = ref('select');
+const uploadedFile = ref([]);
+const fileLen = ref(0);
+
+/**
+ * [form mode]
+ *  - true: 직접 입력 (미구현)
+ *  - false: 선택
+ * [storage uri mode]
+ *  - true: 직접 입력
+ *  - false: 파일 업로드
+ */
+const mode = ref({
+    form: false,
+    uri: true
+})
 
 const formValid = computed(() => {
-    return regexName.test(formName.value) && regexUri.test(formStorageUri.value);
+    return regexName.test(formName.value) && (regexUri.test(formStorageUri.value) || fileLen.value === 1);
 })
 
-const changeMode = () => {
-    if (mode.value === 'select') {
-        mode.value = 'text';
+watch(uploadedFile, () => {
+    try {
+        fileLen.value = uploadedFile.value.length;
+        if (fileLen.value === undefined) {
+            fileLen.value = 1;
+        }
     }
-    else if (mode.value === 'text') {
-        mode.value = 'select';
+    catch {
+        fileLen.value = 0;
     }
+})
+
+const changeMode = (modeType: string) => {
+    mode.value[modeType] = !mode.value[modeType];
+    uploadedFile.value = [];
+    formStorageUri.value = "";
 }
 
-const bucketList = ref([]);
-const storageUriList = ref([]);
+/**
+ * bucket 선택하는 옵션 사라짐
+ */
+// const bucketInfo = ref({});
+// const bucketList = ref([]);
+// const storageUriList = ref([]);
 
-onMounted(async () => {
-    try {
-        const response = await restAPI.get(`/bucket`);
-        if (response) {
-            if (response.code === SuccessResponseCode) {
-                bucketList.value = response.result.map(item => item._name);
-            }
-            else {
-                console.log(response.message);
-            }
-        }
-    } catch (error) {
-        console.error('Error loading data:', error);
-    }
-})
+// onMounted(async () => {
+//     try {
+//         const response = await restAPI.get(`/bucket`);
+//         if (response) {
+//             if (response.code === SuccessResponseCode) {
+//                 bucketList.value = response.result.map(item => item._name);
+//             }
+//             else {
+//                 console.log(response.message);
+//             }
+//         }
+//     } catch (error) {
+//         console.error('Error loading data:', error);
+//     }
+// })
 
-watch(selectedBucket, async () => {
-    formStorageUri.value = '';
-    if (selectedBucket.value in bucketInfo.value) {
-        storageUriList.value = bucketInfo.value[selectedBucket.value];
-    }
-    else {
-        const response = await restAPI.get(`/bucket/object/${selectedBucket.value}?recursive=true`);
-        if (response) {
-            if (response.code === SuccessResponseCode) {
-                storageUriList.value = response.result.map(item => item._object_name);
-                bucketInfo.value[selectedBucket.value] = storageUriList.value;
-            }
-            else {
-                console.log(response.message);
-            }
-        }
-    }
-})
+// watch(selectedBucket, async () => {
+//     formStorageUri.value = '';
+//     if (selectedBucket.value in bucketInfo.value) {
+//         storageUriList.value = bucketInfo.value[selectedBucket.value];
+//     }
+//     else {
+//         const response = await restAPI.get(`/bucket/object/${selectedBucket.value}?recursive=true`);
+//         if (response) {
+//             if (response.code === SuccessResponseCode) {
+//                 storageUriList.value = response.result.map(item => item._object_name);
+//                 bucketInfo.value[selectedBucket.value] = storageUriList.value;
+//             }
+//             else {
+//                 console.log(response.message);
+//             }
+//         }
+//     }
+// })
 
 /**
  * 생성 버튼 활성화와 관련된 변수들입니다.
  */
 const isValid = ref(true);
 const isText = computed(() => {
-    return formName.value.length > 0 && formModelFormat.value.length > 0 && formStorageUri.value.length > 0
+    if (mode.value.uri) {
+        return formName.value.length > 0 && formModelFormat.value.length > 0 && formStorageUri.value.length > 0;
+    }
+    return formName.value.length > 0 && formModelFormat.value.length > 0;
 })
 
 const submit = async () => {
     isValid.value = false;
-    const data = {
-        name: formName.value,
-        namespace: formNamespace.value,
-        inference_service_spec: {
-            predictor: {
-                model_spec: {
-                    storage_uri: `s3://${selectedBucket.value}/` + formStorageUri.value,
-                    model_format: {
-                        name: formModelFormat.value
-                    }
-                },
-                service_account_name: "kserve-sa"
-            }
-        },
-        sidecar_inject: false
+    let url;
+    let data;
+    if (mode.value.uri) {
+        url = '/kserve'
+        data = {
+            name: formName.value,
+            namespace: formNamespace.value,
+            inference_service_spec: {
+                predictor: {
+                    model_spec: {
+                        storage_uri: formStorageUri.value,
+                        model_format: {
+                            name: formModelFormat.value
+                        }
+                    },
+                    service_account_name: "kserve-sa"
+                }
+            },
+            sidecar_inject: false
+        }
     }
-    const response = await restAPI.post(`/kserve`, data);
+    else {
+        url = `/bucket/object/serving/${selectedBucket.value}?model_format=${formModelFormat.value}&service_name=${formName.value}`;
+        data = new FormData();
+        data.append("file", uploadedFile.value);
+    }
+    const response = await restAPI.post(url, data);
     if (response) {
         if (response.code === SuccessResponseCode) {
             setTimeout(() => {
@@ -187,6 +237,31 @@ h1 {
     height: 100px;
 }
 
+.create-item-uri {
+    height: 163px;
+}
+
+.change-mode-btn>div {
+    display: flex;
+    justify-content: flex-end;
+    width: 100%;
+}
+
+.item-uri {
+    width: 100%;
+}
+
+.uri-text {
+    color: #154EC1;
+    letter-spacing: 0.6px;
+    line-height: 1.2;
+    font-weight: 700;
+}
+
+.va-file-upload {
+    width: 100%;
+}
+
 .input-value {
     width: 100%;
 }
@@ -200,5 +275,9 @@ h1 {
 
 .va-input-label {
     font-size: medium;
+}
+
+.va-file-upload__field__button {
+    z-index: 1;
 }
 </style>
