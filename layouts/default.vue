@@ -2,14 +2,16 @@
   <div>
     <div class="main-body">
       <div class="side-menu">
-       <SideMenu v-model:menuItems="sideMenu" :side-menu-active="sideMenuActive" :width="sideWidth"/>
+        <SideMenu v-model:menuItems="sideMenu" :side-menu-active="sideMenuActive" :width="sideWidth" />
         <div style="position: absolute; bottom: 25px; z-index: 10;">
-          <va-icon name="menu" :size="'3em'" v-if="!sideMenuActive" style="line-height: 0px; height: 0px;" v-on:click="sideMenuActiveOnOff"></va-icon>
-          <va-icon name="menu_open" :size="'3em'" v-if="sideMenuActive" style="line-height: 0px; height: 0px;" v-on:click="sideMenuActiveOnOff"></va-icon>
+          <va-icon name="menu" :size="'3em'" v-if="!sideMenuActive" style="line-height: 0px; height: 0px;"
+            v-on:click="sideMenuActiveOnOff"></va-icon>
+          <va-icon name="menu_open" :size="'3em'" v-if="sideMenuActive" style="line-height: 0px; height: 0px;"
+            v-on:click="sideMenuActiveOnOff"></va-icon>
         </div>
       </div>
       <div class="content body-height" :style="contentStyle">
-        <NavBar :userId="userId.value" :userName="userName.value"/>
+        <NavBar :userId="userId.value" :userName="userName.value" />
         <div class="container body-height">
           <slot />
         </div>
@@ -34,7 +36,7 @@ const userId: globalThis.Ref<string> = ref('admin');
 const userName: globalThis.Ref<string> = ref('관리자');
 
 useHead({
-  title: '기본페이지'
+  title: 'Serving Platform'
 })
 
 const sideMenuActiveOnOff = () => {
@@ -72,22 +74,23 @@ const sideMenuActiveOnOff = () => {
 </script>
 
 <style scoped>
-  .main-body {
-    display: flex;
-  }
-  .side-menu {
-    /* height: calc(100vh - 56px); */
-    height: 100vh;
-  }
-  
-  .content {
-    width: 100%;
-  }
-  .container {
-    padding: 12px;
-  }
-  .body-height {
-    height: calc(100vh - 56px);
-  }
+.main-body {
+  display: flex;
+}
 
-</style>
+.side-menu {
+  /* height: calc(100vh - 56px); */
+  height: 100vh;
+}
+
+.content {
+  width: 100%;
+}
+
+.container {
+  padding: 12px;
+}
+
+.body-height {
+  height: calc(100vh - 56px);
+}</style>

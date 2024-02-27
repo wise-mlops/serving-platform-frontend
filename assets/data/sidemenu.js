@@ -18,6 +18,13 @@ export const sideMenuData = [
     icon: 'dashboard',
     title: 'Inference Service',
     path: '/services',
-    description: '데이터테이블 기능 예시'
+    description: 'Inference Service 목록'
+  },
+  {
+    id: 'test',
+    icon: 'quiz',
+    title: 'T5 test',
+    path: '/test/t5',
+    description: 'T5 모델 테스트'
   },
 ]
