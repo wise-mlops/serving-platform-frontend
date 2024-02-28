@@ -41,9 +41,9 @@
                   </VaPopover>
                 </template>
                 <template #cell(creationTimestamp)="{ rowIndex, rowData }">
-                  <!-- <VaPopover class="mr-2 mb-2" :message="popoverTimeMsg(rowData.creationTimestamp)" color="primary">{{
-                    changeTime(rowData) }}</VaPopover> -->
-                  {{ changeTime(rowData) }}
+                  <VaPopover :message="popoverTimeMsg(rowData.creationTimestamp)" color="primary">{{ changeTime(rowData)
+                  }}
+                  </VaPopover>
                 </template>
                 <template #cell(test)="{ rowIndex, rowData }">
                   <VaButton size="small" class="px-2" @click="goTest(rowData.name, rowData.status, rowData.modelFormat)">
@@ -69,6 +69,7 @@ import { useDebouncedRef } from '~~/composables/common';
 
 const pageTitle = ref('Inference Services');
 const router = useRouter();
+const route = useRoute();
 
 const currentPage = ref(1);
 const datas = ref([]);
@@ -84,14 +85,14 @@ const columnOptions = [
   "Status",
   "Name",
   "Model Format",
-  "Created"
+  "Created at"
 ]
 
 const columnOptionValue = {
   Status: "status",
   Name: "name",
   "Model Format": "modelFormat",
-  Created: "creationTimestamp"
+  "Created at": "creationTimestamp"
 }
 
 const popoverStatusMsg = (name: string) => {
@@ -99,20 +100,23 @@ const popoverStatusMsg = (name: string) => {
 }
 
 const popoverTimeMsg = (time: string) => {
-  return `UTC: ${time}`
+  const msg = `Local:  ${new Date(time)}
+  UTC:  ${time}`
+  return msg
 }
 
 const changeTime = (rowData: any) => {
   const timeStamp: string = rowData.creationTimestamp;
-  // const date = new Date(timeStamp);
-  const dateTime = timeStamp.slice(0, -1).replace("T", " ");
-  return dateTime
+  const date = new Date(timeStamp);
+  const timeDiff = nowTimeDiff(date);
+  return timeDiff
 }
 
 /**
  * 페이지가 로드될 때 Inference Service의 리스트를 가져옵니다.
  */
 onMounted(async () => {
+  activeRouteName.value = route.path;
   try {
     await getList();
   } catch (error) {
@@ -120,6 +124,7 @@ onMounted(async () => {
   }
   isValid.value = true;
 })
+
 
 /**
  * 10초마다 자동으로 Inference Service의 리스트를 가져옵니다.
@@ -130,6 +135,13 @@ const autoGetList = setInterval(async () => {
   await getList();
   isValid.value = true;
 }, 10000);
+
+/**
+ * 10초마다 자동으로 가져오는 것을 멈춥니다.
+ */
+onUnmounted(() => {
+  clearInterval(autoGetList);
+})
 
 /**
  * 방법 1. 검색창 내의 변화를 감지하여 입력값과 일치하는 리스트를 가져옵니다.
@@ -206,7 +218,6 @@ const getList = async () => {
 }
 
 const goAdd = () => {
-  clearInterval(autoGetList);
   router.push('/service/add');
 }
 
@@ -224,7 +235,6 @@ const goDetail = (event: any) => {
     }
     else {
       const name = event.item.name;
-      clearInterval(autoGetList);
       navigateTo(`/service/${name}`);
     }
   }
@@ -232,7 +242,6 @@ const goDetail = (event: any) => {
 
 const goTest = async (name: string, status: string, modelFormat: string) => {
   if (status === 'True') {
-    clearInterval(autoGetList);
     router.push({ path: `/test/${name}`, query: { model_format: modelFormat } });
   }
   else {
@@ -306,5 +315,9 @@ const removeItem = async (name: string) => {
 
 .va-input-label {
   font-size: medium;
+}
+
+.va-popover__content {
+  white-space: pre;
 }
 </style>

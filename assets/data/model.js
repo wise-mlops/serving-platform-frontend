@@ -7,6 +7,5 @@ export const modelFormatOptions = [
     "spark-pmml",
     "lightgbm",
     "paddle",
-    "mlflow",
-    "T5"
+    "mlflow"
 ]
