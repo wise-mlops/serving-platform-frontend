@@ -44,11 +44,11 @@ export const getFromFormat = (date: Date, format: string = DATE_FORMAT) => {
 export const getBeforeday = (unit: string, value: number, format: string = DATE_FORMAT) => {
 	var date = new Date();
 
-	if(unit == "Year"){
+	if (unit == "Year") {
 		date.setFullYear(date.getFullYear() - value.valueOf());
-	}else if(unit == "Month"){
+	} else if (unit == "Month") {
 		date.setMonth(date.getMonth() - value.valueOf());
-	}else if(unit == "Day"){
+	} else if (unit == "Day") {
 		date.setDate(date.getDate() - value.valueOf());
 	}
 	return getFromFormat(date, format);
@@ -81,7 +81,7 @@ export const getTimestamp = (value: any) => {
 export const calDateRange = (val1: any, val2: any) => {
 	// FORMAT을 포함한 길이 체크
 	if (val1.length != 10 || val2.length != 10) {
-		return {"error": "function calDateRange(), Date format error."};
+		return { "error": "function calDateRange(), Date format error." };
 	}
 	// 년도, 월, 일로 분리
 	let start_dt: any = [
@@ -136,4 +136,32 @@ export const isDateTypeByString = (value: string, type: string) => {
 		validateTimeFormat = /^\d{4}-(0[1-9]|1[0-2])-([0-2]\d|3[01]) (0\d|1\d|2[0-3]):[0-5]\d:[0-5]\d$/;
 	}
 	return validateTimeFormat.test(value);
+}
+
+
+/**
+ * 특정 날짜가 현재 시각으로부터 얼마나 차이나는지 계산
+ * @param date 날짜 형식
+ * @return string형식 ex)시간 minutes/hours/days ago
+ * @author 조미곤(MgJo)
+ * */
+export const nowTimeDiff = (date: Date) => {
+	const diffMSec = Date.now() - date.getTime();
+	const diffMin = Math.round(diffMSec / (60 * 1000));
+	if (diffMin == 0) {
+		return `less than a minute ago`
+	}
+	else if (diffMin < 60) {
+		return `${diffMin} minutes ago`
+	}
+	else {
+		const diffHour = Math.round(diffMSec / (60 * 60 * 1000));
+		if (diffHour < 24) {
+			return `${diffHour} hours ago`
+		}
+		else {
+			const diffDate = Math.round(diffMSec / (24 * 60 * 60 * 1000));
+			return `${diffDate} days ago`
+		}
+	}
 }

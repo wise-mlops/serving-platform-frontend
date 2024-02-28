@@ -9,9 +9,8 @@
         </VaNavbar>
         <VaInnerLoading :loading="!isValid" class="row flex test-content">
             <VaCard outlined class="flex test-card">
-                <VaCardTitle>Input</VaCardTitle>
+                <VaCardTitle style="font-size: medium;">Input</VaCardTitle>
                 <VaCardContent class="test-card-content">
-                    <VaInput v-model="name" label="Inference Service Name" />
                     <VaTextarea v-model="inputValue" class="test-textarea" autosize placeholder="T5 모델에 맞게 Body 값을 입력해주세요."
                         :maxRows="1" />
                 </VaCardContent>
@@ -19,9 +18,9 @@
             <VaButton icon-right="arrow_forward" icon-color="#ffffff50" class="ml-2 mr-2 test-btn" @click="getResult"
                 :disabled="!isText">compute</VaButton>
             <VaCard outlined class="test-card">
-                <VaCardTitle>Output</VaCardTitle>
+                <VaCardTitle style="font-size: medium;">Output</VaCardTitle>
                 <VaCardContent class="test-card-content">
-                    <VaTextarea v-model="outputValue" class="test-textarea-result" readonly autosize
+                    <VaTextarea v-model="outputValue" class="test-textarea" readonly autosize
                         placeholder="compute 버튼을 눌러주세요." :maxRows="1" />
                 </VaCardContent>
             </VaCard>
@@ -35,12 +34,17 @@ import { SuccessResponseCode } from '~/assets/const/HttpResponseCode';
 const pageTitle = ref('T5 모델 테스트')
 
 const isValid = ref(true);
-const name = ref("");
+const name = ref("nlp-torchserve");
 const inputValue = ref("");
 const outputValue = ref("");
+const route = useRoute();
 
 const isText = computed(() => {
     return name.value.length > 0 && inputValue.value.length > 0;
+})
+
+onMounted(() => {
+    activeRouteName.value = route.path;
 })
 
 const getResult = async () => {
@@ -82,13 +86,7 @@ const getResult = async () => {
 }
 
 .test-textarea {
-    height: 80%;
-    width: 100%;
-    margin-top: 15px;
-}
-
-.test-textarea-result {
-    height: 80%;
+    height: 90%;
     width: 100%;
 }
 

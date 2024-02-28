@@ -17,8 +17,10 @@
   </div>
 </template>
 <script setup>
-definePageMeta({
-  middleware: 'auth'
+const route = useRoute();
+
+onMounted(() => {
+  activeRouteName.value = route.path;
 })
 </script>
 <style>

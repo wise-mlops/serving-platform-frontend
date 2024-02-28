@@ -32,3 +32,6 @@ export const useDebouncedRef = (value: any, delay = 200) => {
     }
   })
 }
+
+/* Current Page */
+export const activeRouteName = ref('/index');

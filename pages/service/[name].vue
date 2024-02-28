@@ -32,7 +32,9 @@
                                         <VaListItem v-for="(key, index) in Object.keys(OverviewData.Info)" :key="index"
                                             class="list__item">
                                             <div class="details-left">
-                                                <h6 class="va-h6">{{ key }}</h6>
+                                                <h6 class="va-h6" v-if="key in columnOptionTitle">{{ columnOptionTitle[key]
+                                                }}</h6>
+                                                <h6 class="va-h6" v-else>{{ key }}</h6>
                                             </div>
                                             <VaListItemSection class="details-right">
                                                 <VaListItemLabel v-if="key === 'Status'">
@@ -70,7 +72,9 @@
                                             </VaPopover>
                                         </template>
                                         <template #cell(lastTransitionTime)="{ rowIndex, rowData }">
-                                            {{ changeTime(rowData.lastTransitionTime) }}
+                                            <VaPopover :message="popoverTimeMsg(rowData.lastTransitionTime)"
+                                                color="primary">{{ changeTime(rowData.lastTransitionTime) }}
+                                            </VaPopover>
                                         </template>
                                     </VaDataTable>
                                 </div>
@@ -87,7 +91,9 @@
                                     <VaListItem v-for="(key, index2) in Object.keys(DetailsData[category])" :key="index2"
                                         class="list__item">
                                         <div class="details-left">
-                                            <h6 class="va-h6">{{ key }}</h6>
+                                            <h6 class="va-h6" v-if="key in columnOptionTitle">{{ columnOptionTitle[key]
+                                            }}</h6>
+                                            <h6 class="va-h6" v-else>{{ key }}</h6>
                                         </div>
                                         <VaListItemSection>
                                             <VaListItemLabel v-if="key == 'Status'">
@@ -106,7 +112,11 @@
                                                 <h6 class="va-h6" v-else>{{ DetailsData[category][key] }}</h6>
                                             </VaListItemLabel>
                                             <VaListItemLabel v-else-if="key == 'creationTimestamp'">
-                                                <h6 class="va-h6">{{ changeTime(DetailsData[category][key]) }}</h6>
+                                                <h6 class="va-h6">
+                                                    <VaPopover :message="popoverTimeMsg(DetailsData[category][key])"
+                                                        color="primary">{{ changeTime(DetailsData[category][key]) }}
+                                                    </VaPopover>
+                                                </h6>
                                             </VaListItemLabel>
                                             <VaListItemLabel v-else>
                                                 <h6 class="va-h6">{{ DetailsData[category][key] }}</h6>
@@ -126,6 +136,7 @@
 </template>
 <script setup lang="ts">
 import { SuccessResponseCode } from '~/assets/const/HttpResponseCode';
+import { columnOptionTitle } from '~/composables/columns';
 
 interface COLUMNS {
     icon?: string,
@@ -185,9 +196,16 @@ onMounted(async () => {
     isValid.value = true;
 })
 
+const popoverTimeMsg = (time: string) => {
+    const msg = `Local:  ${new Date(time)}
+  UTC:  ${time}`
+    return msg
+}
+
 const changeTime = (timeStamp: string) => {
-    const dateTime = timeStamp.slice(0, -1).replace("T", " ");
-    return dateTime
+    const date = new Date(timeStamp);
+    const timeDiff = nowTimeDiff(date);
+    return timeDiff
 }
 </script>
 
