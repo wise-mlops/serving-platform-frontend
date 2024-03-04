@@ -14,6 +14,19 @@ export const overviewCol = ref([
   { label: 'Serverity', key: 'severity', width: '8%' },
 ])
 
+export const bucketCol = ref([
+  { label: 'Bucket Name', key: '_name', sortable: true, width: '16%' },
+  { label: 'Created at', key: '_creation_date', sortable: true, width: '14%' },
+  { label: 'Remove', key: 'remove', sortable: false, width: '5%' }
+])
+
+export const storageCol = ref([
+  { label: 'Name', key: '_object_name', sortable: true, width: '16%' },
+  { label: 'Size', key: '_size', sortable: true, width: '14%' },
+  { label: 'Last Modified', key: '_last_modified', sortable: true, width: '14%' },
+  { label: 'Remove', key: 'remove', sortable: false, width: '5%' }
+])
+
 export const columnOptionTitle = {
   ModelFormat: "Model Format",
   creationTimestamp: "Created"

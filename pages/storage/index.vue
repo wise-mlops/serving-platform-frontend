@@ -9,7 +9,7 @@
         </template>
 
         <template #right>
-          <VaButton @click="goAdd()" class="ml-2" icon="add">
+          <VaButton @click="showModal = !showModal" class="ml-2" icon="add">
             add
           </VaButton>
         </template>
@@ -32,33 +32,16 @@
                 <VaInput :label="'Search Keyword'" v-model="filterKeyword" class="search-input" @keyup.enter="search" />
                 <VaButton class="search-button" @click="search">검색</VaButton>
               </div>
-              <VaDataTable class="services-card-table" :items="datas" :columns="servicesCol"
-                @filtered="filtered = $event.items;" sticky-header clickable hoverable @row:click="goDetail">
+              <VaDataTable class="services-card-table" :items="datas" :columns="bucketCol"
+                @filtered="filtered = $event.items;" sticky-header clickable hoverable @row:click="goBucket">
 
-                <template #cell(status)="{ rowIndex, rowData }">
-                  <VaPopover message="InferenceService is Ready" placement="left-bottom" color="#154ec19e"
-                    v-if="rowData.status === 'True'">
-                    <VaIcon name="check_circle" color="success" />
-                  </VaPopover>
-                  <VaPopover :message=popoverStatusMsg(rowData.name) placement="left-bottom" color="#154ec19e" v-else>
-                    <VaProgressCircle :size="20" :thickness="0.3" indeterminate style="display: inline-block;" />
-                  </VaPopover>
-                </template>
-
-                <template #cell(creationTimestamp)="{ rowIndex, rowData }">
-                  <VaPopover :message="popoverTimeMsg(rowData.creationTimestamp)" color="primary">{{ changeTime(rowData)
-                    }}
-                  </VaPopover>
-                </template>
-
-                <template #cell(test)="{ rowIndex, rowData }">
-                  <VaButton size="small" class="px-2"
-                    @click="goTest(rowData.name, rowData.status, rowData.modelFormat)">
-                    TEST</VaButton>
+                <template #cell(_creation_date)="{ rowIndex, rowData }">
+                  <VaPopover :message="popoverTimeMsg(rowData._creation_date)" color="primary">
+                    {{ changeTime(rowData._creation_date) }}</VaPopover>
                 </template>
 
                 <template #cell(remove)="{ rowIndex, rowData }">
-                  <VaButton size="small" class="px-2" @click="removeItem(rowData.name)">삭제</VaButton>
+                  <VaButton size="small" class="px-2" @click="removeItem(rowData._name)">삭제</VaButton>
                 </template>
               </VaDataTable>
               <VaPagination v-model="currentPage" :pages="totalPage" :visible-pages="5" gapped />
@@ -67,18 +50,24 @@
         </VaInnerLoading>
       </div>
     </div>
+    <VaModal v-model="showModal" ok-text="생성" cancel-text="취소" size="small" :before-ok="beforeOk">
+      <h4 class="va-h4">
+        Create Bucket
+      </h4>
+      <VaInput class="mt-2" v-model="bucketName" placeholder="Bucket Name"
+        :rules="[(value) => (value.trim().length > 0) || '버킷명을 입력해주세요.']" />
+    </VaModal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { servicesCol } from '~~/composables/columns';
-import { NotFoundErrorResponseCode, SuccessResponseCode } from '~~/assets/const/HttpResponseCode'
+import { bucketCol } from '~~/composables/columns';
+import { SuccessResponseCode, ErrorResponseCode, DuplicatedErrorResponseCode } from '~~/assets/const/HttpResponseCode'
 import { useDebouncedRef } from '~~/composables/common';
 
-const router = useRouter();
 const route = useRoute();
 
-const pageTitle = ref('Inference Services');
+const pageTitle = ref("Buckets");
 const currentPage = ref(1);
 const datas = ref([]);
 const filtered = ref("");
@@ -87,24 +76,18 @@ const pageSize = 10;
 const loadedList = ref({});
 const isValid = ref(true);
 const selectedColumn = ref("전체")
+const showModal = ref(false);
+const bucketName = ref("");
 
 const columnSearchOptions = [
   "전체",
-  "Status",
-  "Name",
-  "Model Format",
+  "Bucket Name",
   "Created Date"
 ]
 
 const columnOptionValue = {
-  Status: "status",
-  Name: "name",
-  "Model Format": "modelFormat",
-  "Created Date": "creationTimestamp"
-}
-
-const popoverStatusMsg = (name: string) => {
-  return `Configuration "${name}-predictor" does not have any ready Revision.`
+  "Bucket Name": "_name",
+  "Created Date": "_creation_date"
 }
 
 const popoverTimeMsg = (time: string) => {
@@ -115,43 +98,25 @@ const popoverTimeMsg = (time: string) => {
 
 /**
  * 현재 시각과 UTC 시각의 차이를 반환합니다.
+ * @param timeStamp: UTC 시각
  */
-const changeTime = (rowData: any) => {
-  const timeStamp: string = rowData.creationTimestamp;
+const changeTime = (timeStamp: string) => {
   const date = new Date(timeStamp);
   const timeDiff = nowTimeDiff(date);
   return timeDiff
 }
 
 /**
- * 페이지가 로드될 때 Inference Service의 리스트를 가져옵니다.
+ * 페이지가 로드될 때 bucket의 리스트를 가져옵니다.
  */
 onMounted(async () => {
   activeRouteName.value = route.path;
   try {
-    await getList();
+    await getBucket();
   } catch (error) {
     console.error('Error loading data:', error);
   }
   isValid.value = true;
-})
-
-
-/**
- * 10초마다 자동으로 Inference Service의 리스트를 가져옵니다.
- */
-const autoGetList = setInterval(async () => {
-  isValid.value = false;
-  loadedList.value = {};
-  await getList();
-  isValid.value = true;
-}, 10000);
-
-/**
- * 10초마다 자동으로 가져오는 것을 멈춥니다.
- */
-onUnmounted(() => {
-  clearInterval(autoGetList);
 })
 
 /**
@@ -164,13 +129,13 @@ onUnmounted(() => {
 //   if (filterKeyword.value) {
 //     currentPage.value = 1;
 //     loadedList.value = {};
-//     await getList();
+//     await getBucket();
 //   }
 // })
 // watch(filterKeyword, async () => {
 //   currentPage.value = 1;
 //   loadedList.value = {};
-//   await getList();
+//   await getBucket();
 // })
 
 /**
@@ -182,20 +147,20 @@ const filterKeyword = ref("");
 const search = async () => {
   currentPage.value = 1;
   loadedList.value = {};
-  await getList();
+  await getBucket();
 }
 
 /**
- * 페이지의 변화가 있을 때 Inference Service의 리스트를 가져옵니다.
+ * 페이지의 변화가 있을 때 bucket의 리스트를 가져옵니다.
  */
 watch(currentPage, async () => {
-  await getList();
+  await getBucket();
 })
 
 /**
- * Inference Service의 리스트를 가져오는 함수입니다.
+ * bucket의 리스트를 가져오는 함수입니다.
  */
-const getList = async () => {
+const getBucket = async () => {
   isValid.value = false;
   if (currentPage.value in loadedList.value) {
     datas.value = loadedList.value[currentPage.value];
@@ -204,20 +169,20 @@ const getList = async () => {
     let APIurl;
     if (filterKeyword.value) {
       if (selectedColumn.value === '전체') {
-        APIurl = `/kserve?page=${currentPage.value}&search_query=${filterKeyword.value}`;
+        APIurl = `/bucket?page=${currentPage.value}&search_query=${filterKeyword.value}`;
       }
       else {
-        APIurl = `/kserve?page=${currentPage.value}&search_query=${filterKeyword.value}&col_query=${columnOptionValue[selectedColumn.value]}`;
+        APIurl = `/bucket?page=${currentPage.value}&search_query=${filterKeyword.value}&col_query=${columnOptionValue[selectedColumn.value]}`;
       }
     }
     else {
-      APIurl = `/kserve?page=${currentPage.value}`;
+      APIurl = `/bucket`;
     }
     const response = await restAPI.get(APIurl);
     if (response) {
       if (response.code === SuccessResponseCode) {
-        datas.value = response.result.result_details;
-        totalPage.value = Math.ceil(response.result.total_result_details / pageSize);
+        datas.value = response.result.message.result_details;
+        totalPage.value = Math.ceil(response.result.message.total_result_details / pageSize);
         loadedList.value[currentPage.value] = datas.value;
       }
       else {
@@ -229,62 +194,36 @@ const getList = async () => {
 }
 
 /**
- * Inference Service 등록 페이지로 이동합니다.
- */
-const goAdd = () => {
-  router.push('/service/add');
-}
-
-/**
- * TEST, REMOVE column이 아닐 시 상세보기 페이지로 이동 시키는 함수입니다.
+ * REMOVE column이 아닐 시 해당 bucket으로 이동 시키는 함수입니다.
  * @param event 이벤트
  */
-const goDetail = (event: any) => {
+const goBucket = (event: any) => {
   const cellIndex = event.event.target.cellIndex;
-  const status = event.item.status;
-  if (cellIndex < 4) {
-    if (status === 'Unknown') {
-      alert(`Inference Service를 생성 중입니다.
-잠시 후 새로고침을 해주세요.`);
-    }
-    else {
-      const name = event.item.name;
-      navigateTo(`/service/${name}`);
-    }
+  if (cellIndex < 2) {
+    const name = event.item._name;
+    navigateTo(`/storage/${name}`);
   }
 }
 
 /**
- * Inference Service 테스트 페이지로 이동합니다.
- */
-const goTest = async (name: string, status: string, modelFormat: string) => {
-  if (status === 'True') {
-    router.push({ path: `/test/${name}`, query: { model_format: modelFormat } });
-  }
-  else {
-    alert('Inference Service의 상태가 Ready일 때만 테스트 가능합니다.');
-  }
-}
-
-/**
- * Inference Service를 삭제합니다.
+ * bucket을 삭제합니다.
  */
 const removeItem = async (name: string) => {
   isValid.value = false;
-  const response = await restAPI.del(`/kserve/${name}`);
+  const response = await restAPI.del(`/bucket/${name}`);
   if (response) {
     if (response.code === SuccessResponseCode) {
       alert(`${name} is removed!`);
       currentPage.value = 1;
       loadedList.value = {};
       setTimeout(async () => {
-        await getList();
+        await getBucket();
         isValid.value = true;
       }, 2000);
     }
     else {
-      if (response.code === NotFoundErrorResponseCode) {
-        alert('잘못된 요청입니다.');
+      if (response.code === ErrorResponseCode) {
+        alert(`${response.result}`);
       }
       console.log(response.message);
       isValid.value = true;
@@ -295,6 +234,50 @@ const removeItem = async (name: string) => {
   }
 }
 
+watch(showModal, () => {
+  bucketName.value = "";
+})
+
+const beforeOk = (hide) => {
+  createBucket(hide);
+}
+
+/**
+ * 새로운 bucket을 생성하는 함수입니다.
+ */
+const createBucket = async (hide) => {
+  isValid.value = false;
+  if (bucketName.value.trim()) {
+    const body = {
+      bucket_name: bucketName.value,
+      object_lock: false
+    }
+    const response = await restAPI.usePost('/bucket', body);
+    if (response) {
+      if (response.code === SuccessResponseCode) {
+        if (response.result) {
+          currentPage.value = 1;
+          loadedList.value = {};
+          alert('bucket이 생성되었습니다.');
+          await getBucket();
+          hide();
+        }
+      }
+      else if (response.code === DuplicatedErrorResponseCode || ErrorResponseCode) {
+        alert(`${bucketName.value}은 사용할 수 없는 이름입니다.`);
+        bucketName.value = '';
+      }
+      else {
+        console.log(response.message);
+        hide();
+      }
+    }
+  }
+  else {
+    alert('버킷명을 확인해주세요.');
+  }
+  isValid.value = true;
+}
 </script>
 
 <style>

@@ -40,8 +40,9 @@
         <VaButton preset="primary" to="/services" class="mt-2">돌아가기</VaButton>
     </div>
 </template>
+
 <script setup lang="ts">
-import { SuccessResponseCode, SyntaxErrorResponseCode } from '~/assets/const/HttpResponseCode';
+import { SuccessResponseCode, ErrorResponseCode } from '~/assets/const/HttpResponseCode';
 const route = useRoute();
 
 definePageMeta({
@@ -82,19 +83,12 @@ const delBtn = (idx: number) => {
 const getResult = async () => {
     try {
         isValid.value = false;
-        let body;
-        if (inputValue.value.length > 1) {
-            body = inputValue.value;
-        }
-        else {
-            body = inputValue.value[0];
-        }
-        const response = await restAPI.post(`/kserve/kubeflow-user-example-com/${route.params.name}/infer?model_format=${modelFormat}`, body);
+        const response = await restAPI.post(`/kserve/kubeflow-user-example-com/${route.params.name}/infer?model_format=${modelFormat}`, inputValue.value);
         if (response) {
             if (response.code === SuccessResponseCode) {
-                outputValue.value = JSON.stringify(response.result.outputs, null, 4);
+                outputValue.value = JSON.stringify(response.result, null, 4);
             }
-            else if (response.code === SyntaxErrorResponseCode) {
+            else if (response.code === ErrorResponseCode) {
                 outputValue.value = JSON.stringify(response.result.error, null, 4);
             }
             else {
@@ -110,6 +104,7 @@ const getResult = async () => {
 }
 
 </script>
+
 <style>
 .test-page {
     height: 100%;
