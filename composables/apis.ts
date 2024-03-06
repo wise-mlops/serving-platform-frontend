@@ -43,10 +43,11 @@ export const restAPI = {
 
     return rst.value;
   },
-  del: async (url: string, baseUrl: string = config.apiServer) => {
+  del: async (url: string, body: {} = {}, baseUrl: string = config.apiServer) => {
     let data = await $fetch<APIResponseType>(url, {
       method: 'DELETE',
-      baseURL: baseUrl
+      baseURL: baseUrl,
+      body: body
     });
 
     return data;

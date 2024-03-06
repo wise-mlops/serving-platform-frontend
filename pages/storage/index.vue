@@ -66,6 +66,7 @@ import { SuccessResponseCode, ErrorResponseCode, DuplicatedErrorResponseCode } f
 import { useDebouncedRef } from '~~/composables/common';
 
 const route = useRoute();
+const router = useRouter();
 
 const pageTitle = ref("Buckets");
 const currentPage = ref(1);
@@ -82,12 +83,12 @@ const bucketName = ref("");
 const columnSearchOptions = [
   "전체",
   "Bucket Name",
-  "Created Date"
+  "Last Modified"
 ]
 
 const columnOptionValue = {
   "Bucket Name": "_name",
-  "Created Date": "_creation_date"
+  "Last Modified": "_creation_date"
 }
 
 const popoverTimeMsg = (time: string) => {
@@ -199,9 +200,10 @@ const getBucket = async () => {
  */
 const goBucket = (event: any) => {
   const cellIndex = event.event.target.cellIndex;
-  if (cellIndex < 2) {
+  const parentCellIndex = event.event.target.parentNode.cellIndex;
+  if (cellIndex < 2 || parentCellIndex < 2) {
     const name = event.item._name;
-    navigateTo(`/storage/${name}`);
+    router.push(`/storage/${name}`);
   }
 }
 

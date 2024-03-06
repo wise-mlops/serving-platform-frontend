@@ -23,7 +23,8 @@
                                     v-model="formName" />
                             </VaListItem>
                             <VaListItem class="create-item">
-                                <VaSelect v-model="formModelFormat" :options="modelFormatOptions" label="Model Format" />
+                                <VaSelect v-model="formModelFormat" :options="modelFormatOptions"
+                                    label="Model Format" />
                             </VaListItem>
                             <VaListItem class="create-item-uri" v-if="!mode.uri">
                                 <div class="flex item-uri">
@@ -38,8 +39,12 @@
                                     v-model="formStorageUri" />
                             </VaListItem>
                             <VaListItem class="change-mode-btn">
-                                <VaButton @click="changeMode('uri')" preset="secondary" borderColor="primary" size="small">
-                                    변경 </VaButton>
+                                <VaButton v-if="mode.uri" @click="changeMode('uri')" preset="secondary"
+                                    borderColor="primary" size="small">
+                                    파일 업로드 </VaButton>
+                                <VaButton v-else @click="changeMode('uri')" preset="secondary" borderColor="primary"
+                                    size="small">
+                                    직접 입력 </VaButton>
                             </VaListItem>
                         </VaList>
                     </VaCardContent>
@@ -53,6 +58,7 @@
         </div>
     </div>
 </template>
+
 <script setup lang="ts">
 import { SuccessResponseCode, DuplicatedErrorResponseCode } from '~~/assets/const/HttpResponseCode';
 import { modelFormatOptions } from "~/assets/data/model";
@@ -213,6 +219,7 @@ const submit = async () => {
 }
 
 </script>
+
 <style>
 h1 {
     font-size: 20pt;
