@@ -16,15 +16,16 @@ export const overviewCol = ref([
 
 export const bucketCol = ref([
   { label: 'Bucket Name', key: '_name', sortable: true, width: '16%' },
-  { label: 'Created at', key: '_creation_date', sortable: true, width: '14%' },
+  { label: 'Last Modified', key: '_creation_date', sortable: true, width: '14%' },
   { label: 'Remove', key: 'remove', sortable: false, width: '5%' }
 ])
 
 export const storageCol = ref([
-  { label: 'Name', key: '_object_name', sortable: true, width: '16%' },
-  { label: 'Size', key: '_size', sortable: true, width: '14%' },
-  { label: 'Last Modified', key: '_last_modified', sortable: true, width: '14%' },
-  { label: 'Remove', key: 'remove', sortable: false, width: '5%' }
+  { label: 'Name', key: '_object_name', sortable: true, width: '29%' },
+  { label: 'Size', key: '_size', sortable: true, width: '25%' },
+  { label: 'Last Modified', key: '_last_modified', sortable: true, width: '25%' },
+  { label: 'Download', key: 'download', sortable: false, width: '13%' },
+  { label: 'Share', key: 'share', sortable: false, width: '13%' }
 ])
 
 export const columnOptionTitle = {

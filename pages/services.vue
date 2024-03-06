@@ -138,14 +138,14 @@ onMounted(async () => {
 
 
 /**
- * 10초마다 자동으로 Inference Service의 리스트를 가져옵니다.
+ * 20초마다 자동으로 Inference Service의 리스트를 가져옵니다.
  */
 const autoGetList = setInterval(async () => {
   isValid.value = false;
   loadedList.value = {};
   await getList();
   isValid.value = true;
-}, 10000);
+}, 20000);
 
 /**
  * 10초마다 자동으로 가져오는 것을 멈춥니다.
@@ -241,8 +241,9 @@ const goAdd = () => {
  */
 const goDetail = (event: any) => {
   const cellIndex = event.event.target.cellIndex;
+  const parentCellIndex = event.event.target.parentNode.cellIndex;
   const status = event.item.status;
-  if (cellIndex < 4) {
+  if (cellIndex < 4 || parentCellIndex < 4) {
     if (status === 'Unknown') {
       alert(`Inference Service를 생성 중입니다.
 잠시 후 새로고침을 해주세요.`);

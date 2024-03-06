@@ -2,17 +2,27 @@
   <div>
     <VaNavbar color="backgroundPrimary">
       <template #left>
-        <h4 class="va-h5">
+        <h4 class="va-h5 navigate-links">
           <VaBreadcrumbs>
-            <VaBreadcrumbsItem v-for="(folder, index) in pathList" :label="folder" :href="makePath(1, index + 1)"
-              class="navigate-link" />
+            <VaBreadcrumbsItem v-for="(folder, index) in pathList" :key="index">
+              <NuxtLink :to="makePath(0, index + 1)" class="navigate-link">{{ folder }}</NuxtLink>
+            </VaBreadcrumbsItem>
+            <VaBreadcrumbsItem>
+              <VaChip @click="showInput = !showInput" icon="create_new_folder" flat v-if="!showInput">new path</VaChip>
+              <VaInput v-model="newPath" placeholder="new path name" v-if="showInput" @blur="loseFocus()"
+                :autofocus="true" @keyup.enter="moveNewPath()" />
+            </VaBreadcrumbsItem>
           </VaBreadcrumbs>
         </h4>
       </template>
 
       <template #right>
+        <VaButton @click="removeItem()" color="danger" preset="primary" border-color="danger" icon="delete"
+          :disabled="!selectClicked">
+          삭제
+        </VaButton>
         <VaButton @click="showModal = !showModal" class="ml-2" icon="upload">
-          upload
+          업로드
         </VaButton>
       </template>
     </VaNavbar>
@@ -21,6 +31,7 @@
         <VaInnerLoading :loading="!isValid">
           <VaCard outlined class="services-card">
             <VaCardTitle />
+            {{ selectedObjects._object_name }}
             <VaCardContent class="services-card-content">
               <div class="services-card-top" v-if="mode === 'debounce'">
                 <VaSelect v-model="selectedColumn" :options="columnSearchOptions" placeholder="전체"
@@ -33,14 +44,16 @@
                 <VaInput :label="'Search Keyword'" v-model="filterKeyword" class="search-input" @keyup.enter="search" />
                 <VaButton class="search-button" @click="search">검색</VaButton>
               </div>
-              <VaDataTable class="services-card-table" :items="datas" :columns="storageCol"
-                @filtered="filtered = $event.items;" sticky-header clickable hoverable @row:click="selectPath">
+              <VaDataTable class="services-card-table" :items="datas" :columns="storageCol" selectable
+                v-model="selectedObjects" @filtered="filtered = $event.items;" sticky-header clickable hoverable
+                @row:click="selectPath">
 
                 <template #cell(_object_name)="{ rowIndex, rowData }">
-                  <span class="name-area">
-                    <VaIcon name="folder" class="mr-1" color="primary" v-if="rowData._object_name.slice(-1) === '/'" />
-                    <VaIcon name="description" class="mr-1" color="primary" v-else />
-                    {{ getName(rowData._object_name)[1] }}
+                  <span class="name-area clickable">
+                    <VaIcon name="folder" class="mr-1 clickable" color="primary"
+                      v-if="rowData._object_name.slice(-1) === '/'" />
+                    <VaIcon name="description" class="mr-1 clickable" color="primary" v-else />
+                    {{ getFName(rowData._object_name) }}
                   </span>
                 </template>
 
@@ -49,8 +62,12 @@
                     v-if="rowData._last_modified">{{ changeTime(rowData._last_modified) }}</VaPopover>
                 </template>
 
-                <template #cell(remove)="{ rowIndex, rowData }">
-                  <VaButton size="small" class="px-2" @click="removeItem(rowData._object_name)">삭제</VaButton>
+                <template #cell(download)="{ rowIndex, rowData }">
+                  <VaButton size="small" class="px-2" @click="download(rowData._object_name)">다운로드</VaButton>
+                </template>
+
+                <template #cell(share)="{ rowIndex, rowData }">
+                  <VaIcon name="share" color="primary" @click="copyURL(rowData._object_name)" size="large" />
                 </template>
               </VaDataTable>
               <VaPagination v-model="currentPage" :pages="totalPage" :visible-pages="5" gapped />
@@ -60,17 +77,19 @@
       </div>
     </div>
     <VaModal v-model="showModal" ok-text="업로드" cancel-text="취소" :before-ok="beforeOk" max-height="442px" fixed-layout>
-      <h4 class="va-h4">
-        Upload Object
-      </h4>
-      <VaFileUpload v-model="uploadedFile" dropzone class="mt-2 file-upload-area" />
+      <VaInnerLoading :loading="!isValid">
+        <h4 class="va-h4">
+          Upload Object
+        </h4>
+        <VaFileUpload v-model="uploadedFile" dropzone class="mt-2 file-upload-area" />
+      </VaInnerLoading>
     </VaModal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { storageCol } from '~~/composables/columns';
-import { NotFoundErrorResponseCode, SuccessResponseCode } from '~~/assets/const/HttpResponseCode'
+import { DuplicatedErrorResponseCode, NotFoundErrorResponseCode, SuccessResponseCode } from '~~/assets/const/HttpResponseCode'
 import { useDebouncedRef } from '~~/composables/common';
 
 const route = useRoute();
@@ -89,6 +108,10 @@ const selectedBucket = ref("");
 const currentPath = ref("");
 const showModal = ref(false);
 const uploadedFile = ref([]);
+const newPath = ref("");
+const showInput = ref(false);
+const selectedObjects = ref([]);
+const selectClicked = ref(false);
 
 const columnSearchOptions = [
   "전체",
@@ -127,10 +150,22 @@ const changeTime = (timeStamp: string) => {
 const makePath = (start: number, end: number) => {
   let result = "";
   for (let i = start; i < end; i += 1) {
-    result += "/" + pathList.value[i];
+    result += pathList.value[i] + "/";
   }
-  return result + "/";
+  return result;
 }
+
+/**
+ * 클릭된 object가 있는지 확인합니다.
+ */
+watch(selectedObjects, () => {
+  if (selectedObjects.value.length > 0) {
+    selectClicked.value = true;
+  }
+  else {
+    selectClicked.value = false;
+  }
+})
 
 /**
  * 페이지가 로드될 때 해당 directory의 파일과 폴더 리스트를 가져옵니다.
@@ -138,8 +173,11 @@ const makePath = (start: number, end: number) => {
 onMounted(async () => {
   activeRouteName.value = routePath;
   pathList.value = routePath.split("/");
+  if (pathList.value.at(-1) === '') {
+    pathList.value.pop();
+  }
   selectedBucket.value = pathList.value[2];
-  currentPath.value = makePath(3, pathList.value.length).slice(1);
+  currentPath.value = makePath(3, pathList.value.length);
   try {
     await getFiles();
   } catch (error) {
@@ -148,12 +186,27 @@ onMounted(async () => {
   isValid.value = true;
 })
 
-const getName = (name: string) => {
-  const objectName = name.split("/");
-  if (name.slice(-1) === '/') {
-    return ["folder", objectName.at(-2)];
+/**
+ * file인지 folder인지 알려주는 함수입니다.
+ * @param name object name
+ */
+const getFType = (name: string) => {
+  if (name.at(-1) === "/") {
+    return "folder"
   }
-  return ["file", objectName.at(-1)];
+  return "file"
+}
+
+/**
+ * path를 제외한 해당 file 혹은 folder의 이름을 알려주는 함수입니다.
+ * @param name object name
+ */
+const getFName = (name: string) => {
+  const nameSplit = name.split("/");
+  if (getFType(name) === "folder") {
+    return nameSplit.at(-2);
+  }
+  return nameSplit.at(-1);
 }
 
 /**
@@ -195,6 +248,28 @@ watch(currentPage, async () => {
 })
 
 /**
+ * new path를 입력하는 input box에 focus를 잃을 때 input box를 숨깁니다.
+ */
+const loseFocus = () => {
+  showInput.value = !showInput.value;
+  newPath.value = "";
+}
+
+/**
+ * 입력한 new path로 이동하는 함수입니다.
+ */
+const moveNewPath = () => {
+  let url = routePath;
+  if (getFType(routePath) === "folder") {
+    url += newPath.value;
+  }
+  else {
+    url += '/' + newPath.value;
+  }
+  navigateTo(url);
+}
+
+/**
  * 해당 directory의 파일과 폴더 리스트를 가져오는 함수입니다.
  */
 const getFiles = async () => {
@@ -206,18 +281,18 @@ const getFiles = async () => {
     let APIurl;
     if (filterKeyword.value) {
       if (selectedColumn.value === '전체') {
-        APIurl = `/bucket/object/${selectedBucket.value}?prefix=${currentPath.value}&recursive=false&page=${currentPage.value}&search_query=${filterKeyword.value}`;
+        APIurl = `/bucket/object/${selectedBucket.value}?prefix=${currentPath.value}&recursive=true&page=${currentPage.value}&search_query=${filterKeyword.value}`;
       }
       else {
-        APIurl = `/bucket/object/${selectedBucket.value}?prefix=${currentPath.value}&recursive=false&page=${currentPage.value}&search_query=${filterKeyword.value}&col_query=${columnOptionValue[selectedColumn.value]}`;
+        APIurl = `/bucket/object/${selectedBucket.value}?prefix=${currentPath.value}&recursive=true&page=${currentPage.value}&search_query=${filterKeyword.value}&col_query=${columnOptionValue[selectedColumn.value]}`;
       }
     }
     else {
-      if (currentPath.value === '/') {
-        APIurl = `/bucket/object/${selectedBucket.value}?recursive=false&page=${currentPage.value}`;
+      if (currentPath.value) {
+        APIurl = `/bucket/object/${selectedBucket.value}?prefix=${currentPath.value}&recursive=false&page=${currentPage.value}`;
       }
       else {
-        APIurl = `/bucket/object/${selectedBucket.value}?prefix=${currentPath.value}&recursive=false&page=${currentPage.value}`;
+        APIurl = `/bucket/object/${selectedBucket.value}?recursive=false&page=${currentPage.value}`;
       }
     }
     const response = await restAPI.get(APIurl);
@@ -236,24 +311,22 @@ const getFiles = async () => {
 }
 
 /**
- * REMOVE column이 아니고, 폴더일 시 해당 directory로 이동 시키는 함수입니다.
+ * Checkbox, Download, Share column이 아니고, 폴더일 시 해당 directory로 이동 시키는 함수입니다.
  * @param event 이벤트
  */
 const selectPath = (event: any) => {
   const cellIndex = event.event.target.cellIndex;
-  if (cellIndex < 3) {
+  const parentCellIndex = event.event.target.parentNode.cellIndex;
+  if ((cellIndex > 0 && cellIndex < 4) || (parentCellIndex > 0 && parentCellIndex < 4)) {
     const name = event.item._object_name;
-    let next = getName(name);
-    if (next[0] === "folder") {
+    if (getFType(name) === "folder") {
+      const fName = getFName(name);
       if (routePath.at(-1) === '/') {
-        navigateTo(`${routePath}${next[1]}/`);
+        navigateTo(`${fName}`);
       }
       else {
-        navigateTo(`${routePath}/${next[1]}/`);
+        navigateTo(`${routePath}/${fName}/`);
       }
-    }
-    else {
-      alert("파일 정보 보여주기?")
     }
   }
 }
@@ -261,36 +334,79 @@ const selectPath = (event: any) => {
 /**
  * object를 삭제합니다.
  */
-const removeItem = async (name: string) => {
+const removeItem = async () => {
   isValid.value = false;
-  const response = await restAPI.del(`/bucket/object/${selectedBucket.value}?object_name=${name}`);
-  if (response) {
-    if (response.code === SuccessResponseCode) {
-      alert(`${name} is removed!`);
-      currentPage.value = 1;
-      loadedList.value = {};
-      setTimeout(async () => {
-        await getFiles();
-        isValid.value = true;
-      }, 2000);
-    }
-    else {
-      if (response.code === NotFoundErrorResponseCode) {
-        alert('잘못된 요청입니다.');
+  const removeItems: string[] = [];
+  selectedObjects.value.forEach(obj => {
+    removeItems.push(obj._object_name);
+  });
+  try {
+    const response = await restAPI.del(`/bucket/object/${selectedBucket.value}`, removeItems);
+    if (response) {
+      if (response.code === SuccessResponseCode) {
+        currentPage.value = 1;
+        loadedList.value = {};
+        setTimeout(async () => {
+          await getFiles();
+          alert('삭제가 완료되었습니다.');
+          isValid.value = true;
+        }, 1000);
       }
-      console.log(response.message);
-      isValid.value = true;
+      else {
+        if (response.code === NotFoundErrorResponseCode) {
+          alert('잘못된 요청입니다.');
+        }
+        console.log(response.message);
+        isValid.value = true;
+      }
     }
   }
-  else {
+  catch (error) {
+    console.error(error);
     isValid.value = true;
   }
 }
 
+/**
+ * object를 다운로드합니다.
+ */
+const download = async (name: string) => {
+  isValid.value = false;
+  try {
+    const response = await restAPI.post(`/bucket/object/${selectedBucket.value}/download/url?object_name=${name}`);
+    if (response) {
+      if (response.code === SuccessResponseCode) {
+        const downloadLink = document.createElement("a");
+        downloadLink.href = response.result.message;
+        downloadLink.download = getFName(name);
+        downloadLink.click();
+      }
+      else {
+        if (response.code === NotFoundErrorResponseCode) {
+          alert('잘못된 요청입니다.');
+        }
+        console.log(response.message);
+      }
+    }
+  }
+  catch (error) {
+    console.error(error);
+  }
+  finally {
+    isValid.value = true;
+  }
+}
+
+/**
+ * modal창에서 벗어났을 때 업로드한 파일이 사라집니다.
+ */
 watch(showModal, () => {
   uploadedFile.value = [];
 })
 
+/**
+ * modal창에서 업로드 버튼을 클릭 시 발생하는 함수입니다.
+ */
 const beforeOk = (hide) => {
   uploadObject(hide);
 }
@@ -302,34 +418,96 @@ const uploadObject = async (hide) => {
   isValid.value = false;
   if (uploadedFile.value.length > 0) {
     const data = new FormData();
-    data.append("file", uploadedFile.value);
-    const response = await restAPI.usePost(`/bucket/object/${selectedBucket.value}`, data);
-    if (response) {
-      if (response.code === SuccessResponseCode) {
-        if (response.result) {
-          currentPage.value = 1;
-          loadedList.value = {};
-          alert('업로드가 완료되었습니다.');
-          await getFiles();
+    uploadedFile.value.forEach(file => {
+      data.append("file", file);
+    });
+    let url;
+    const uploadPath = currentPath.value.slice(0, -1);
+    if (uploadPath) {
+      url = `/bucket/object/${selectedBucket.value}?object_name=${uploadPath}`;
+    }
+    else {
+      url = `/bucket/object/${selectedBucket.value}`;
+    }
+    try {
+      hide();
+      const response = await restAPI.post(url, data);
+      if (response) {
+        if (response.code === SuccessResponseCode) {
+          if (response.result) {
+            currentPage.value = 1;
+            loadedList.value = {};
+            setTimeout(async () => {
+              await getFiles();
+              alert('업로드가 완료되었습니다.');
+              isValid.value = true;
+            }, 2000);
+          }
+        }
+        else if (response.code === DuplicatedErrorResponseCode) {
+          alert(response.result);
+          isValid.value = true;
+        }
+        else {
+          console.log(response.message);
+          isValid.value = true;
         }
       }
-      else {
-        console.log(response.message);
-      }
     }
-    hide();
+    catch (error) {
+      console.error('Error uploading data: ', error);
+      isValid.value = true;
+    }
   }
   else {
     alert('업로드된 파일이 없습니다.');
+    isValid.value = true;
   }
-  isValid.value = true;
 }
+
+const copyURL = async (name: string) => {
+  const storageUrl = "s3://" + selectedBucket.value + "/" + currentPath.value + getFName(name);
+  if (navigator.clipboard && window.isSecureContext) {
+    try {
+      await navigator.clipboard.writeText(storageUrl);
+      alert("클립보드에 uri가 복사되었습니다.");
+    } catch (error) {
+      console.error(error);
+      alert("클립보드에 uri가 복사되지 않았습니다.");
+    }
+  } else {
+    const textArea = document.createElement("textarea");
+    textArea.value = storageUrl;
+
+    textArea.style.position = "absolute";
+    textArea.style.left = "-999999px";
+
+    document.body.prepend(textArea);
+    textArea.select();
+    try {
+      document.execCommand('copy');
+      alert("클립보드에 uri가 복사되었습니다.");
+    } catch (error) {
+      console.error(error);
+      alert("클립보드에 uri가 복사되지 않았습니다.");
+    } finally {
+      textArea.remove();
+    }
+  }
+}
+
 
 </script>
 
 <style>
+.navigate-links,
 .navigate-link {
   text-wrap: nowrap;
+  color: black;
+}
+
+.navigate-link:hover {
+  color: #154EC1;
 }
 
 .services-card {
