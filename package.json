@@ -8,6 +8,7 @@
     "postinstall": "nuxt prepare"
   },
   "devDependencies": {
+    "json-editor-vue": "^0.12.0",
     "nuxt": "^3.10.1"
   },
   "dependencies": {

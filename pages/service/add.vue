@@ -1,5 +1,5 @@
 <template>
-    <div class="row">
+    <div class="add-card">
         <va-navbar color="backgroundPrimary">
             <template #left>
                 <h4 class="va-h5">
@@ -7,9 +7,9 @@
                 </h4>
             </template>
         </va-navbar>
-        <div class="px-3 flex flex-col md12 xs12 lg12">
-            <VaInnerLoading :loading="!isValid">
-                <VaCard class="create-card">
+        <div class="px-3 md12 xs12 lg12 add-card-content">
+            <VaInnerLoading :loading="!isValid" class="add-card-loading">
+                <VaCard outlined class="create-card">
                     <!-- <VaButton preset="primary" @click="changeMode('form')">변경</VaButton>
                     <VaCardBlock horizontal class="create-content" v-if="mode.form">
                         <VaCardContent>
@@ -113,48 +113,6 @@ const changeMode = (modeType: string) => {
 }
 
 /**
- * bucket 선택하는 옵션 사라짐
- */
-// const bucketInfo = ref({});
-// const bucketList = ref([]);
-// const storageUriList = ref([]);
-
-// onMounted(async () => {
-//     try {
-//         const response = await restAPI.get(`/bucket`);
-//         if (response) {
-//             if (response.code === SuccessResponseCode) {
-//                 bucketList.value = response.result.map(item => item._name);
-//             }
-//             else {
-//                 console.log(response.message);
-//             }
-//         }
-//     } catch (error) {
-//         console.error('Error loading data:', error);
-//     }
-// })
-
-// watch(selectedBucket, async () => {
-//     formStorageUri.value = '';
-//     if (selectedBucket.value in bucketInfo.value) {
-//         storageUriList.value = bucketInfo.value[selectedBucket.value];
-//     }
-//     else {
-//         const response = await restAPI.get(`/bucket/object/${selectedBucket.value}?recursive=true`);
-//         if (response) {
-//             if (response.code === SuccessResponseCode) {
-//                 storageUriList.value = response.result.map(item => item._object_name);
-//                 bucketInfo.value[selectedBucket.value] = storageUriList.value;
-//             }
-//             else {
-//                 console.log(response.message);
-//             }
-//         }
-//     }
-// })
-
-/**
  * 생성 버튼 활성화와 관련된 변수들입니다.
  */
 const isValid = ref(true);
@@ -221,14 +179,20 @@ const submit = async () => {
 </script>
 
 <style>
-h1 {
-    font-size: 20pt;
-    margin-top: 20px;
-    margin-bottom: 20px;
+.add-card {
+    height: 100%;
+}
+
+.add-card-content {
+    height: 83%;
+}
+
+.add-card-loading {
+    height: 100%;
 }
 
 .create-card {
-    height: 700px;
+    height: 100%;
 }
 
 .create-content {
@@ -237,15 +201,16 @@ h1 {
 }
 
 .create-content-list {
+    height: 100%;
     width: 35%;
 }
 
 .create-item {
-    height: 100px;
+    height: 17%;
 }
 
 .create-item-uri {
-    height: 163px;
+    height: 27.5%;
 }
 
 .change-mode-btn>div {

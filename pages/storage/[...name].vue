@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="storage-card">
     <VaNavbar color="backgroundPrimary">
       <template #left>
         <h4 class="va-h5 navigate-links">
@@ -26,55 +26,53 @@
         </VaButton>
       </template>
     </VaNavbar>
-    <div class="row">
-      <div class="px-3 flex flex-col md12 xs12 lg12">
-        <VaInnerLoading :loading="!isValid">
-          <VaCard outlined class="services-card">
-            <VaCardTitle />
-            {{ selectedObjects._object_name }}
-            <VaCardContent class="services-card-content">
-              <div class="services-card-top" v-if="mode === 'debounce'">
-                <VaSelect v-model="selectedColumn" :options="columnSearchOptions" placeholder="전체"
-                  class="select-column" />
-                <VaInput :label="'Search Keyword'" v-model="filterKeyword" class="search-input" />
-              </div>
-              <div class="services-card-top" v-else-if="mode === 'button'">
-                <VaSelect v-model="selectedColumn" :options="columnSearchOptions" placeholder="전체"
-                  class="select-column" />
-                <VaInput :label="'Search Keyword'" v-model="filterKeyword" class="search-input" @keyup.enter="search" />
-                <VaButton class="search-button" @click="search">검색</VaButton>
-              </div>
-              <VaDataTable class="services-card-table" :items="datas" :columns="storageCol" selectable
-                v-model="selectedObjects" @filtered="filtered = $event.items;" sticky-header clickable hoverable
-                @row:click="selectPath">
+    <div class="px-3 md12 xs12 lg12 storage-card-content">
+      <VaInnerLoading :loading="!isValid" class="storage-card-loading">
+        <VaCard outlined class="services-card">
+          <VaCardTitle />
+          {{ selectedObjects.object_name }}
+          <VaCardContent class="services-card-content">
+            <div class="services-card-top" v-if="mode === 'debounce'">
+              <VaSelect v-model="selectedColumn" :options="columnSearchOptions" placeholder="전체"
+                class="select-column" />
+              <VaInput :label="'Search Keyword'" v-model="filterKeyword" class="search-input" />
+            </div>
+            <div class="services-card-top" v-else-if="mode === 'button'">
+              <VaSelect v-model="selectedColumn" :options="columnSearchOptions" placeholder="전체"
+                class="select-column" />
+              <VaInput :label="'Search Keyword'" v-model="filterKeyword" class="search-input" @keyup.enter="search" />
+              <VaButton class="search-button" @click="search">검색</VaButton>
+            </div>
+            <VaDataTable class="services-card-table" :items="datas" :columns="storageCol" selectable
+              v-model="selectedObjects" @filtered="filtered = $event.items;" sticky-header clickable hoverable
+              @row:click="selectPath">
 
-                <template #cell(_object_name)="{ rowIndex, rowData }">
-                  <span class="name-area clickable">
-                    <VaIcon name="folder" class="mr-1 clickable" color="primary"
-                      v-if="rowData._object_name.slice(-1) === '/'" />
-                    <VaIcon name="description" class="mr-1 clickable" color="primary" v-else />
-                    {{ getFName(rowData._object_name) }}
-                  </span>
-                </template>
+              <template #cell(object_name)="{ rowIndex, rowData }">
+                <span class="name-area clickable">
+                  <VaIcon name="folder" class="mr-1 clickable" color="primary"
+                    v-if="rowData.object_name.slice(-1) === '/'" />
+                  <VaIcon name="description" class="mr-1 clickable" color="primary" v-else />
+                  {{ getFName(rowData.object_name) }}
+                </span>
+              </template>
 
-                <template #cell(_last_modified)="{ rowIndex, rowData }">
-                  <VaPopover :message="popoverTimeMsg(rowData._last_modified)" color="primary"
-                    v-if="rowData._last_modified">{{ changeTime(rowData._last_modified) }}</VaPopover>
-                </template>
+              <template #cell(_last_modified)="{ rowIndex, rowData }">
+                <VaPopover :message="popoverTimeMsg(rowData._last_modified)" color="primary"
+                  v-if="rowData._last_modified">{{ changeTime(rowData._last_modified) }}</VaPopover>
+              </template>
 
-                <template #cell(download)="{ rowIndex, rowData }">
-                  <VaButton size="small" class="px-2" @click="download(rowData._object_name)">다운로드</VaButton>
-                </template>
+              <template #cell(download)="{ rowIndex, rowData }">
+                <VaButton size="small" class="px-2" @click="download(rowData.object_name)">다운로드</VaButton>
+              </template>
 
-                <template #cell(share)="{ rowIndex, rowData }">
-                  <VaIcon name="share" color="primary" @click="copyURL(rowData._object_name)" size="large" />
-                </template>
-              </VaDataTable>
-              <VaPagination v-model="currentPage" :pages="totalPage" :visible-pages="5" gapped />
-            </VaCardContent>
-          </VaCard>
-        </VaInnerLoading>
-      </div>
+              <template #cell(share)="{ rowIndex, rowData }">
+                <VaIcon name="share" color="primary" @click="copyURL(rowData.object_name)" size="large" />
+              </template>
+            </VaDataTable>
+            <VaPagination v-model="currentPage" :pages="totalPage" :visible-pages="5" gapped />
+          </VaCardContent>
+        </VaCard>
+      </VaInnerLoading>
     </div>
     <VaModal v-model="showModal" ok-text="업로드" cancel-text="취소" :before-ok="beforeOk" max-height="442px" fixed-layout>
       <VaInnerLoading :loading="!isValid">
@@ -121,7 +119,7 @@ const columnSearchOptions = [
 ]
 
 const columnOptionValue = {
-  Name: "_object_name",
+  Name: "object_name",
   Size: "_size",
   "Last Modified": "_last_modified"
 }
@@ -318,7 +316,7 @@ const selectPath = (event: any) => {
   const cellIndex = event.event.target.cellIndex;
   const parentCellIndex = event.event.target.parentNode.cellIndex;
   if ((cellIndex > 0 && cellIndex < 4) || (parentCellIndex > 0 && parentCellIndex < 4)) {
-    const name = event.item._object_name;
+    const name = event.item.object_name;
     if (getFType(name) === "folder") {
       const fName = getFName(name);
       if (routePath.at(-1) === '/') {
@@ -338,7 +336,7 @@ const removeItem = async () => {
   isValid.value = false;
   const removeItems: string[] = [];
   selectedObjects.value.forEach(obj => {
-    removeItems.push(obj._object_name);
+    removeItems.push(obj.object_name);
   });
   try {
     const response = await restAPI.del(`/bucket/object/${selectedBucket.value}`, removeItems);
@@ -510,14 +508,47 @@ const copyURL = async (name: string) => {
   color: #154EC1;
 }
 
+.storage-card {
+  height: 100%;
+}
+
+.storage-card-content {
+  height: 83%;
+}
+
+.storage-card-loading {
+  height: 100%;
+}
+
 .services-card {
-  height: 700px;
+  height: 100%;
 }
 
 .services-card-top {
   display: flex;
   width: 30%;
   margin-bottom: 15px;
+}
+
+.services-card-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 93%;
+}
+
+.services-card-table {
+  width: 100%;
+  height: 100%;
+  flex-grow: 1;
+}
+
+.va-input-label {
+  font-size: medium;
+}
+
+.va-popover__content {
+  white-space: pre;
 }
 
 .select-column {
@@ -534,23 +565,5 @@ const copyURL = async (name: string) => {
   align-self: flex-end;
   min-width: 80px;
   margin-left: 10px;
-}
-
-.services-card-content {
-  display: flex;
-  flex-direction: column;
-  height: 93%;
-}
-
-.services-card-table {
-  height: 500px !important;
-}
-
-.va-input-label {
-  font-size: medium;
-}
-
-.va-popover__content {
-  white-space: pre;
 }
 </style>
