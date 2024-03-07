@@ -1,71 +1,66 @@
 <template>
-  <div>
-    <div class="row">
-      <VaNavbar color="backgroundPrimary">
-        <template #left>
-          <h4 class="va-h5">
-            {{ pageTitle }}
-          </h4>
-        </template>
+  <div class="inference-card">
+    <VaNavbar color="backgroundPrimary">
+      <template #left>
+        <h4 class="va-h5">
+          {{ pageTitle }}
+        </h4>
+      </template>
 
-        <template #right>
-          <VaButton @click="goAdd()" class="ml-2" icon="add">
-            add
-          </VaButton>
-        </template>
-      </VaNavbar>
-    </div>
-    <div class="row">
-      <div class="px-3 flex flex-col md12 xs12 lg12">
-        <VaInnerLoading :loading="!isValid">
-          <VaCard outlined class="services-card">
-            <VaCardTitle />
-            <VaCardContent class="services-card-content">
-              <div class="services-card-top" v-if="mode === 'debounce'">
-                <VaSelect v-model="selectedColumn" :options="columnSearchOptions" placeholder="전체"
-                  class="select-column" />
-                <VaInput :label="'Search Keyword'" v-model="filterKeyword" class="search-input" />
-              </div>
-              <div class="services-card-top" v-else-if="mode === 'button'">
-                <VaSelect v-model="selectedColumn" :options="columnSearchOptions" placeholder="전체"
-                  class="select-column" />
-                <VaInput :label="'Search Keyword'" v-model="filterKeyword" class="search-input" @keyup.enter="search" />
-                <VaButton class="search-button" @click="search">검색</VaButton>
-              </div>
-              <VaDataTable class="services-card-table" :items="datas" :columns="servicesCol"
-                @filtered="filtered = $event.items;" sticky-header clickable hoverable @row:click="goDetail">
+      <template #right>
+        <VaButton @click="goAdd()" class="ml-2" icon="add">
+          add
+        </VaButton>
+      </template>
+    </VaNavbar>
+    <div class="px-3 md12 xs12 lg12 inference-card-content">
+      <VaInnerLoading :loading="!isValid" class="inference-card-loading">
+        <VaCard outlined class="services-card">
+          <VaCardTitle />
+          <VaCardContent class="services-card-content">
+            <div class="services-card-top" v-if="mode === 'debounce'">
+              <VaSelect v-model="selectedColumn" :options="columnSearchOptions" placeholder="전체"
+                class="select-column" />
+              <VaInput :label="'Search Keyword'" v-model="filterKeyword" class="search-input" />
+            </div>
+            <div class="services-card-top" v-else-if="mode === 'button'">
+              <VaSelect v-model="selectedColumn" :options="columnSearchOptions" placeholder="전체"
+                class="select-column" />
+              <VaInput :label="'Search Keyword'" v-model="filterKeyword" class="search-input" @keyup.enter="search" />
+              <VaButton class="search-button" @click="search">검색</VaButton>
+            </div>
+            <VaDataTable class="services-card-table" :items="datas" :columns="servicesCol"
+              @filtered="filtered = $event.items;" sticky-header clickable hoverable @row:click="goDetail">
 
-                <template #cell(status)="{ rowIndex, rowData }">
-                  <VaPopover message="InferenceService is Ready" placement="left-bottom" color="#154ec19e"
-                    v-if="rowData.status === 'True'">
-                    <VaIcon name="check_circle" color="success" />
-                  </VaPopover>
-                  <VaPopover :message=popoverStatusMsg(rowData.name) placement="left-bottom" color="#154ec19e" v-else>
-                    <VaProgressCircle :size="20" :thickness="0.3" indeterminate style="display: inline-block;" />
-                  </VaPopover>
-                </template>
+              <template #cell(status)="{ rowIndex, rowData }">
+                <VaPopover message="InferenceService is Ready" placement="left-bottom" color="#154ec19e"
+                  v-if="rowData.status === 'True'">
+                  <VaIcon name="check_circle" color="success" />
+                </VaPopover>
+                <VaPopover :message=popoverStatusMsg(rowData.name) placement="left-bottom" color="#154ec19e" v-else>
+                  <VaProgressCircle :size="20" :thickness="0.3" indeterminate style="display: inline-block;" />
+                </VaPopover>
+              </template>
 
-                <template #cell(creationTimestamp)="{ rowIndex, rowData }">
-                  <VaPopover :message="popoverTimeMsg(rowData.creationTimestamp)" color="primary">{{ changeTime(rowData)
-                    }}
-                  </VaPopover>
-                </template>
+              <template #cell(creationTimestamp)="{ rowIndex, rowData }">
+                <VaPopover :message="popoverTimeMsg(rowData.creationTimestamp)" color="primary">{{ changeTime(rowData)
+                  }}
+                </VaPopover>
+              </template>
 
-                <template #cell(test)="{ rowIndex, rowData }">
-                  <VaButton size="small" class="px-2"
-                    @click="goTest(rowData.name, rowData.status, rowData.modelFormat)">
-                    TEST</VaButton>
-                </template>
+              <template #cell(test)="{ rowIndex, rowData }">
+                <VaButton size="small" class="px-2" @click="goTest(rowData.name, rowData.status, rowData.modelFormat)">
+                  TEST</VaButton>
+              </template>
 
-                <template #cell(remove)="{ rowIndex, rowData }">
-                  <VaButton size="small" class="px-2" @click="removeItem(rowData.name)">삭제</VaButton>
-                </template>
-              </VaDataTable>
-              <VaPagination v-model="currentPage" :pages="totalPage" :visible-pages="5" gapped />
-            </VaCardContent>
-          </VaCard>
-        </VaInnerLoading>
-      </div>
+              <template #cell(remove)="{ rowIndex, rowData }">
+                <VaButton size="small" class="px-2" @click="removeItem(rowData.name)">삭제</VaButton>
+              </template>
+            </VaDataTable>
+            <VaPagination v-model="currentPage" :pages="totalPage" :visible-pages="5" gapped class="pagination" />
+          </VaCardContent>
+        </VaCard>
+      </VaInnerLoading>
     </div>
   </div>
 </template>
@@ -299,14 +294,47 @@ const removeItem = async (name: string) => {
 </script>
 
 <style>
+.inference-card {
+  height: 100%;
+}
+
+.inference-card-content {
+  height: 83%;
+}
+
+.inference-card-loading {
+  height: 100%;
+}
+
 .services-card {
-  height: 700px;
+  height: 100%;
 }
 
 .services-card-top {
   display: flex;
   width: 30%;
   margin-bottom: 15px;
+}
+
+.services-card-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 93%;
+}
+
+.services-card-table {
+  width: 100%;
+  height: 100%;
+  flex-grow: 1;
+}
+
+.va-input-label {
+  font-size: medium;
+}
+
+.va-popover__content {
+  white-space: pre;
 }
 
 .select-column {
@@ -323,23 +351,5 @@ const removeItem = async (name: string) => {
   align-self: flex-end;
   min-width: 80px;
   margin-left: 10px;
-}
-
-.services-card-content {
-  display: flex;
-  flex-direction: column;
-  height: 93%;
-}
-
-.services-card-table {
-  height: 500px !important;
-}
-
-.va-input-label {
-  font-size: medium;
-}
-
-.va-popover__content {
-  white-space: pre;
 }
 </style>

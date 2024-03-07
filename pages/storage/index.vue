@@ -1,54 +1,58 @@
 <template>
-  <div>
-    <div class="row">
-      <VaNavbar color="backgroundPrimary">
-        <template #left>
-          <h4 class="va-h5">
-            {{ pageTitle }}
-          </h4>
-        </template>
+  <div class="bucket-card">
+    <VaNavbar color="backgroundPrimary">
+      <template #left>
+        <h4 class="va-h5">
+          {{ pageTitle }}
+        </h4>
+      </template>
 
-        <template #right>
-          <VaButton @click="showModal = !showModal" class="ml-2" icon="add">
-            add
-          </VaButton>
-        </template>
-      </VaNavbar>
-    </div>
-    <div class="row">
-      <div class="px-3 flex flex-col md12 xs12 lg12">
-        <VaInnerLoading :loading="!isValid">
-          <VaCard outlined class="services-card">
-            <VaCardTitle />
-            <VaCardContent class="services-card-content">
-              <div class="services-card-top" v-if="mode === 'debounce'">
-                <VaSelect v-model="selectedColumn" :options="columnSearchOptions" placeholder="전체"
-                  class="select-column" />
-                <VaInput :label="'Search Keyword'" v-model="filterKeyword" class="search-input" />
-              </div>
-              <div class="services-card-top" v-else-if="mode === 'button'">
-                <VaSelect v-model="selectedColumn" :options="columnSearchOptions" placeholder="전체"
-                  class="select-column" />
-                <VaInput :label="'Search Keyword'" v-model="filterKeyword" class="search-input" @keyup.enter="search" />
-                <VaButton class="search-button" @click="search">검색</VaButton>
-              </div>
-              <VaDataTable class="services-card-table" :items="datas" :columns="bucketCol"
-                @filtered="filtered = $event.items;" sticky-header clickable hoverable @row:click="goBucket">
-
-                <template #cell(_creation_date)="{ rowIndex, rowData }">
-                  <VaPopover :message="popoverTimeMsg(rowData._creation_date)" color="primary">
-                    {{ changeTime(rowData._creation_date) }}</VaPopover>
-                </template>
-
-                <template #cell(remove)="{ rowIndex, rowData }">
-                  <VaButton size="small" class="px-2" @click="removeItem(rowData._name)">삭제</VaButton>
-                </template>
-              </VaDataTable>
-              <VaPagination v-model="currentPage" :pages="totalPage" :visible-pages="5" gapped />
-            </VaCardContent>
-          </VaCard>
-        </VaInnerLoading>
-      </div>
+      <template #right>
+        <VaButton @click="showModal = !showModal" class="ml-2" icon="add">
+          add
+        </VaButton>
+      </template>
+    </VaNavbar>
+    <div class="px-3 md12 xs12 lg12 bucket-card-content">
+      <VaInnerLoading :loading="!isValid" class="bucket-card-loading">
+        <VaCard outlined class="services-card">
+          <VaCardTitle />
+          <VaCardContent class="services-card-content">
+            <div class="services-card-top" v-if="mode === 'debounce'">
+              <VaSelect v-model="selectedColumn" :options="columnSearchOptions" placeholder="전체"
+                class="select-column" />
+              <VaInput :label="'Search Keyword'" v-model="filterKeyword" class="search-input" />
+            </div>
+            <div class="services-card-top" v-else-if="mode === 'button'">
+              <VaSelect v-model="selectedColumn" :options="columnSearchOptions" placeholder="전체"
+                class="select-column" />
+              <VaInput :label="'Search Keyword'" v-model="filterKeyword" class="search-input" @keyup.enter="search" />
+              <VaButton class="search-button" @click="search">검색</VaButton>
+            </div>
+            <VaList class="services-card-bottom">
+              <VaListItem v-for="(data, index) in datas" :key="index" class="service-card-item">
+                <VaListItemSection avatar @click="goBucket(index)">
+                  <VaAvatar>
+                    <VaIcon name="inventory" size="large" />
+                  </VaAvatar>
+                </VaListItemSection>
+                <VaListItemSection @click="goBucket(index)">
+                  <VaListItemLabel>
+                    <h6 class="va-h6 ml-1">{{ data._name }}</h6>
+                  </VaListItemLabel>
+                  <VaListItemLabel caption :lines="2">
+                    <p class="category-text"> last modified: {{ changeTime(data._creation_date) }}</p>
+                  </VaListItemLabel>
+                </VaListItemSection>
+                <VaListItemSection icon>
+                  <VaIcon name="delete_forever" @click="removeBucket(data._name)" size="large" color="info" />
+                </VaListItemSection>
+              </VaListItem>
+            </VaList>
+            <VaPagination v-model="currentPage" :pages="totalPage" :visible-pages="5" gapped class="pagination" />
+          </VaCardContent>
+        </VaCard>
+      </VaInnerLoading>
     </div>
     <VaModal v-model="showModal" ok-text="생성" cancel-text="취소" size="small" :before-ok="beforeOk">
       <h4 class="va-h4">
@@ -61,7 +65,6 @@
 </template>
 
 <script setup lang="ts">
-import { bucketCol } from '~~/composables/columns';
 import { SuccessResponseCode, ErrorResponseCode, DuplicatedErrorResponseCode } from '~~/assets/const/HttpResponseCode'
 import { useDebouncedRef } from '~~/composables/common';
 
@@ -71,9 +74,8 @@ const router = useRouter();
 const pageTitle = ref("Buckets");
 const currentPage = ref(1);
 const datas = ref([]);
-const filtered = ref("");
 const totalPage = ref(1);
-const pageSize = 10;
+const pageSize = 6;
 const loadedList = ref({});
 const isValid = ref(true);
 const selectedColumn = ref("전체")
@@ -91,20 +93,14 @@ const columnOptionValue = {
   "Last Modified": "_creation_date"
 }
 
-const popoverTimeMsg = (time: string) => {
-  const msg = `Local:  ${new Date(time)}
-  UTC:  ${time}`
-  return msg
-}
-
 /**
  * 현재 시각과 UTC 시각의 차이를 반환합니다.
  * @param timeStamp: UTC 시각
  */
 const changeTime = (timeStamp: string) => {
   const date = new Date(timeStamp);
-  const timeDiff = nowTimeDiff(date);
-  return timeDiff
+  const newDate = `${date.getFullYear()}/${date.getMonth()}/${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()} (GMT +9)`;
+  return newDate
 }
 
 /**
@@ -177,7 +173,7 @@ const getBucket = async () => {
       }
     }
     else {
-      APIurl = `/bucket`;
+      APIurl = `/bucket?page=${currentPage.value}`;
     }
     const response = await restAPI.get(APIurl);
     if (response) {
@@ -198,34 +194,29 @@ const getBucket = async () => {
  * REMOVE column이 아닐 시 해당 bucket으로 이동 시키는 함수입니다.
  * @param event 이벤트
  */
-const goBucket = (event: any) => {
-  const cellIndex = event.event.target.cellIndex;
-  const parentCellIndex = event.event.target.parentNode.cellIndex;
-  if (cellIndex < 2 || parentCellIndex < 2) {
-    const name = event.item._name;
-    router.push(`/storage/${name}`);
-  }
+const goBucket = (idx: number) => {
+  router.push(`/storage/${datas.value[idx]._name}`);
 }
 
 /**
  * bucket을 삭제합니다.
  */
-const removeItem = async (name: string) => {
+const removeBucket = async (name: string) => {
   isValid.value = false;
   const response = await restAPI.del(`/bucket/${name}`);
   if (response) {
     if (response.code === SuccessResponseCode) {
-      alert(`${name} is removed!`);
       currentPage.value = 1;
       loadedList.value = {};
       setTimeout(async () => {
         await getBucket();
+        alert(`${name} is removed!`);
         isValid.value = true;
       }, 2000);
     }
     else {
       if (response.code === ErrorResponseCode) {
-        alert(`${response.result}`);
+        alert("비어있는 버킷만 삭제가 가능합니다.");
       }
       console.log(response.message);
       isValid.value = true;
@@ -283,8 +274,20 @@ const createBucket = async (hide) => {
 </script>
 
 <style>
+.bucket-card {
+  height: 100%;
+}
+
+.bucket-card-content {
+  height: 83%;
+}
+
+.bucket-card-loading {
+  height: 100%;
+}
+
 .services-card {
-  height: 700px;
+  height: 100%;
 }
 
 .services-card-top {
@@ -293,10 +296,37 @@ const createBucket = async (hide) => {
   margin-bottom: 15px;
 }
 
+.services-card-bottom {
+  width: 100%;
+  height: 100%;
+  flex-grow: 1;
+}
+
+.services-card-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 93%;
+}
+
+.service-card-item {
+  height: 16%;
+  padding: 14px;
+  cursor: pointer;
+}
+
+.service-card-item:hover {
+  background-color: rgb(21, 78, 193, 0.1);
+  border-radius: 10px;
+}
+
+.va-input-label {
+  font-size: medium;
+}
+
 .select-column {
   align-self: flex-end;
   margin-right: 10px;
-  widows: 10px;
 }
 
 .search-input {
@@ -309,21 +339,7 @@ const createBucket = async (hide) => {
   margin-left: 10px;
 }
 
-.services-card-content {
-  display: flex;
-  flex-direction: column;
-  height: 93%;
-}
-
-.services-card-table {
-  height: 500px !important;
-}
-
-.va-input-label {
-  font-size: medium;
-}
-
-.va-popover__content {
-  white-space: pre;
+.category-text {
+  line-height: normal;
 }
 </style>
