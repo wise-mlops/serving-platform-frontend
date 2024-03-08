@@ -15,6 +15,11 @@ export default defineNuxtConfig({
       mode: 'out-in'
     }
   },
+  build: {
+    rollupOptions: {
+      external: ['json-editor-vue']
+    }
+  },
   modules: ['@vuestic/nuxt'],
   vuestic: {
     config: {
