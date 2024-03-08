@@ -31,8 +31,7 @@
                     </VaScrollContainer>
                 </VaCardContent>
                 <VaCardContent class="test-card-content" v-else-if="inputMode === 1">
-                    <JsonEditorVue v-model="inputTextValue" class="editor" mode="text" :mainMenuBar="false"
-                        :askToFormat="false" />
+                    <JsonEditorVue v-model="inputTextValue" />
                 </VaCardContent>
             </VaCard>
             <VaButton icon-right="arrow_forward" icon-color="#ffffff50" class="ml-2 mr-2 test-btn" @click="getResult"
@@ -51,7 +50,7 @@
 
 <script setup lang="ts">
 import { SuccessResponseCode } from '~/assets/const/HttpResponseCode';
-import JsonEditorVue from 'json-editor-vue'
+import JsonEditorVue from '~/components/JsonEditorVue.vue';
 import { sampleT5Input } from '~/composables/sample.t5';
 
 const route = useRoute();
