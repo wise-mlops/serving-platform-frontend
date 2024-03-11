@@ -15,7 +15,7 @@ export const overviewCol = ref([
 ])
 
 export const storageCol = ref([
-  { label: 'Name', key: 'object_name', sortable: true, width: '29%' },
+  { label: 'Name', key: '_object_name', sortable: true, width: '29%' },
   { label: 'Size', key: '_size', sortable: true, width: '25%' },
   { label: 'Last Modified', key: '_last_modified', sortable: true, width: '25%' },
   { label: 'Download', key: 'download', sortable: false, width: '13%' },
@@ -23,6 +23,14 @@ export const storageCol = ref([
 ])
 
 export const columnOptionTitle = {
-  ModelFormat: "Model Format",
-  creationTimestamp: "Created"
+  status: "Status",
+  api_url: "API URL",
+  storage_uri: "Storage URI",
+  model_format: "Model Format",
+  name: "Name",
+  namespace: "Namespace",
+  url: "URL",
+  annotations: "Annotations",
+  creation_timestamp: "Created At",
+  service_account: "Service Account"
 }

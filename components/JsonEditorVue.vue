@@ -1,5 +1,5 @@
 <template>
-    <JsonEditorVue v-model="$props.inputTextValue" class="editor" mode="text" :mainMenuBar="false"
+    <JsonEditorVue v-bind="$props.inputTextValue" class="editor" mode="text" :mainMenuBar="false"
         :askToFormat="false" />
 </template>
 
@@ -7,10 +7,9 @@
 import JsonEditorVue from 'json-editor-vue'
 
 interface Props {
-    inputTextValue?: ref;
+    inputTextValue?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-    inputTextValue: ref()
 })
 </script>
