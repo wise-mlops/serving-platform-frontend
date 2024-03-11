@@ -2,7 +2,7 @@ const config = useAppConfig();
 
 export const restAPI = {
   get: async (url: string, baseUrl: string = config.apiServer) => {
-    let data = await $fetch<APIResponseType>(url, {
+    let data = await $fetch<ResponseBody>(url, {
       method: 'GET',
       baseURL: baseUrl
     });
@@ -10,7 +10,7 @@ export const restAPI = {
     return data;
   },
   useGet: async (url: string, baseUrl: string = config.apiServer) => {
-    let { data: rst, error } = await useFetch<APIResponseType>(url, {
+    let { data: rst, error } = await useFetch<ResponseBody>(url, {
       method: 'GET',
       baseURL: baseUrl
     });
@@ -18,7 +18,7 @@ export const restAPI = {
     return rst.value;
   },
   post: async (url: string, body: {} = {}, baseUrl: string = config.apiServer) => {
-    let data = await $fetch<APIResponseType>(url, {
+    let data = await $fetch<ResponseBody>(url, {
       method: 'POST',
       baseURL: baseUrl,
       body: body
@@ -27,7 +27,7 @@ export const restAPI = {
     return data;
   },
   usePost: async (url: string, body: {} = {}, baseUrl: string = config.apiServer) => {
-    let { data: rst, error } = await useFetch<APIResponseType>(url, {
+    let { data: rst, error } = await useFetch<ResponseBody>(url, {
       method: 'POST',
       baseURL: baseUrl,
       body: body
@@ -36,7 +36,7 @@ export const restAPI = {
     return rst.value;
   },
   put: async (url: string, body: {} = {}, baseUrl: string = config.apiServer) => {
-    let { data: rst, error } = await useFetch<APIResponseType>(url, {
+    let { data: rst, error } = await useFetch<ResponseBody>(url, {
       method: 'PUT',
       baseURL: baseUrl
     });
@@ -44,7 +44,7 @@ export const restAPI = {
     return rst.value;
   },
   del: async (url: string, body: {} = {}, baseUrl: string = config.apiServer) => {
-    let data = await $fetch<APIResponseType>(url, {
+    let data = await $fetch<ResponseBody>(url, {
       method: 'DELETE',
       baseURL: baseUrl,
       body: body
@@ -53,7 +53,7 @@ export const restAPI = {
     return data;
   },
   useDel: async (url: string, baseUrl: string = config.apiServer) => {
-    let { data: rst, error } = await useFetch<APIResponseType>(url, {
+    let { data: rst, error } = await useFetch<ResponseBody>(url, {
       method: 'DELETE',
       baseURL: baseUrl
     });

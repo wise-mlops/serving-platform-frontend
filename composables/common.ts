@@ -6,13 +6,6 @@ export const pagenationView = (pageSize: number, originItems: any[], filtered: a
   return pageSize && pageSize !== 0 ? Math.ceil(items.length / pageSize) : items.length;
 }
 
-/* API Response */
-export interface APIResponseType {
-  code: number
-  message: string
-  result: object
-}
-
 /* Debounce function */
 export const useDebouncedRef = (value: any, delay = 200) => {
   let timeout: any;

@@ -72,17 +72,17 @@ import { useDebouncedRef } from '~~/composables/common';
 const router = useRouter();
 const route = useRoute();
 
-const pageTitle = ref('Inference Services');
-const currentPage = ref(1);
-const datas = ref([]);
-const totalPage = ref(1);
-const pageSize = 10;
-const loadedList = ref({});
-const isValid = ref(true);
-const selectedColumn = ref("전체")
-const sortedOption = ref('');
+const pageTitle = ref<string>('Inference Services');
+const currentPage = ref<number>(1);
+const datas = ref<InferenceServiceDetail[]>([]);
+const totalPage = ref<number>(1);
+const pageSize: number = 10;
+const loadedList = ref<{ [key: number]: InferenceServiceDetail[] }>({});
+const isValid = ref<boolean>(true);
+const selectedColumn = ref<string>("전체")
+const sortedOption = ref<string>("");
 
-const columnSearchOptions = [
+const columnSearchOptions: string[] = [
   "전체",
   "Status",
   "Name",
@@ -90,18 +90,18 @@ const columnSearchOptions = [
   "Created Date"
 ]
 
-const columnOptionValue = {
+const columnOptionValue: { [key: string]: string } = {
   Status: "status",
   Name: "name",
   "Model Format": "modelFormat",
   "Created Date": "creationTimestamp"
 }
 
-const popoverStatusMsg = (name: string) => {
+const popoverStatusMsg = (name: string): string => {
   return `Configuration "${name}-predictor" does not have any ready Revision.`
 }
 
-const popoverTimeMsg = (time: string) => {
+const popoverTimeMsg = (time: string): string => {
   const msg = `Local:  ${new Date(time)}
   UTC:  ${time}`
   return msg
@@ -110,7 +110,7 @@ const popoverTimeMsg = (time: string) => {
 /**
  * 현재 시각과 UTC 시각의 차이를 반환합니다.
  */
-const changeTime = (rowData: any) => {
+const changeTime = (rowData: any): string => {
   const timeStamp: string = rowData.creationTimestamp;
   const date = new Date(timeStamp);
   const timeDiff = nowTimeDiff(date);
@@ -129,24 +129,6 @@ onMounted(async () => {
   }
   isValid.value = true;
 })
-
-
-/**
- * 20초마다 자동으로 Inference Service의 리스트를 가져옵니다.
- */
-// const autoGetList = setInterval(async () => {
-//   isValid.value = false;
-//   loadedList.value = {};
-//   await getList();
-//   isValid.value = true;
-// }, 20000);
-
-/**
- * 10초마다 자동으로 가져오는 것을 멈춥니다.
- */
-// onUnmounted(() => {
-//   clearInterval(autoGetList);
-// })
 
 /**
  * 방법 1. 검색창 내의 변화를 감지하여 입력값과 일치하는 리스트를 가져옵니다.
@@ -229,7 +211,7 @@ const getList = async () => {
     else {
       APIurl += `${sortedOption.value}`;
     }
-    const response = await restAPI.get(APIurl);
+    const response: InferenceServicesResponsebody = await restAPI.get(APIurl);
     if (response) {
       if (response.code === SuccessResponseCode) {
         datas.value = response.result.result_details;

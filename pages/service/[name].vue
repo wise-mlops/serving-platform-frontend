@@ -145,10 +145,6 @@ interface COLUMNS {
     data: object
 };
 
-interface Props {
-    columns: COLUMNS[]
-};
-
 definePageMeta({
     middleware: [
         'service',
@@ -157,20 +153,36 @@ definePageMeta({
 
 const route = useRoute();
 
-const overviewData = ref({
-    info: '',
+const pageTitle = ref<string>('Inference Service 상세 보기')
+const selectTab = ref<number>(0);
+const overviewStatus = ref<string>('');
+const isValid = ref<boolean>(true);
+const overviewData = ref<DetailOverview>({
+    info: {
+        status: 'True',
+        api_url: '',
+        storage_uri: '',
+        model_format: ''
+    },
     inference_service_conditions: []
 })
-
-const detailsData = ref({
-    info: '',
-    predictor_spec: ''
+const detailsData = ref<DetailDetails>({
+    info: {
+        status: 'True',
+        name: '',
+        namespace: '',
+        url: '',
+        annotations: {
+            'sidecar.istio.io/inject': ''
+        },
+        creation_timestamp: ''
+    },
+    predictor_spec: {
+        storage_uri: '',
+        model_format: '',
+        service_account: ''
+    }
 })
-
-const pageTitle = ref('Inference Service 상세 보기')
-const selectTab = ref(0);
-const overviewStatus = ref('');
-const isValid = ref(true);
 
 const tabList: COLUMNS[] = [
     { title: "Overview", data: {} },
@@ -180,7 +192,7 @@ const tabList: COLUMNS[] = [
 onMounted(async () => {
     try {
         isValid.value = false;
-        const response = await restAPI.get(`/kserve/detail/${route.params.name}`);
+        const response: InferenceServiceDetailResponsebody = await restAPI.get(`/kserve/detail/${route.params.name}`);
         if (response) {
             if (response.code === SuccessResponseCode) {
                 overviewData.value = response.result.overview;

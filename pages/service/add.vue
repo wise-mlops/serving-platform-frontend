@@ -63,19 +63,18 @@
 import { SuccessResponseCode, DuplicatedErrorResponseCode } from '~~/assets/const/HttpResponseCode';
 import { modelFormatOptions } from "~/assets/data/model";
 
-const pageTitle = ref('Inference Service 등록')
+const pageTitle = ref<string>('Inference Service 등록')
 const regexName = /^[a-z]([-a-z0-9]*[a-z])?$/;  // 영어 소문자, 숫자, -만 허용
 const regexUri = /(file|s3|gs|http)?:\/\/.*/;  // ["file://", "s3://", "gs://", "http://"] 중 하나로 시작
-const regexNameExp = "이름은 영어 소문자로 시작하고 끝나며, 그 안에는 소문자, 숫자, -만 허용됩니다.";
-const regexUriExp = "file:// , s3:// , gs:// , http:// 중 하나로 시작해야 합니다.";
-
-const formName = ref('');
-const formNamespace = ref('kubeflow-user-example-com');
-const formModelFormat = ref('');
-const selectedBucket = ref('test');  // 버킷명 수동으로 변경 필요
-const formStorageUri = ref('');
+const regexNameExp: string = "이름은 영어 소문자로 시작하고 끝나며, 그 안에는 소문자, 숫자, -만 허용됩니다.";
+const regexUriExp: string = "file:// , s3:// , gs:// , http:// 중 하나로 시작해야 합니다.";
+const formName = ref<string>('');
+const formNamespace = ref<string>('kubeflow-user-example-com');
+const formModelFormat = ref<string>('');
+const selectedBucket = ref<string>('test');  // 버킷명 수동으로 변경 필요
+const formStorageUri = ref<string>('');
 const uploadedFile = ref([]);
-const fileLen = ref(0);
+const fileLen = ref<number>(0);
 
 /**
  * [form mode]
@@ -115,7 +114,7 @@ const changeMode = (modeType: string) => {
 /**
  * 생성 버튼 활성화와 관련된 변수들입니다.
  */
-const isValid = ref(true);
+const isValid = ref<boolean>(true);
 const isText = computed(() => {
     if (mode.value.uri) {
         return formName.value.length > 0 && formModelFormat.value.length > 0 && formStorageUri.value.length > 0;

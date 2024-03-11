@@ -54,18 +54,18 @@ import JsonEditorVue from '~/components/JsonEditorVue.vue';
 
 const route = useRoute();
 
-const pageTitle = ref('T5 모델 테스트')
-const isValid = ref(true);
-const name = ref("nlp-torchserve");
+const pageTitle = ref<string>('T5 모델 테스트')
+const isValid = ref<boolean>(true);
+const name = ref<string>("nlp-torchserve");
 const inputTextValue = ref();
-const inputValue = ref({
+const inputValue = ref<{ role: string, content: string }>({
     role: "",
     content: ""
 });
 const inputValueList = ref([])
-const outputValue = ref("");
-const inputMode = ref(0);
-const inputRadio = [{ text: "모드 1", value: 0 }, { text: "모드 2", value: 1 }]
+const outputValue = ref<string>("");
+const inputMode = ref<number>(0);
+const inputRadio: { text: string, value: number }[] = [{ text: "모드 1", value: 0 }, { text: "모드 2", value: 1 }]
 
 const isText = computed(() => {
     const roleLength = inputValue.value.role.trim().length
