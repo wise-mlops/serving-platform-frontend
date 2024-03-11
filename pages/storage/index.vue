@@ -71,24 +71,24 @@ import { useDebouncedRef } from '~~/composables/common';
 const route = useRoute();
 const router = useRouter();
 
-const pageTitle = ref("Buckets");
-const currentPage = ref(1);
-const datas = ref([]);
-const totalPage = ref(1);
-const pageSize = 6;
-const loadedList = ref({});
-const isValid = ref(true);
-const selectedColumn = ref("전체")
-const showModal = ref(false);
-const bucketName = ref("");
+const pageTitle = ref<string>("Buckets");
+const currentPage = ref<number>(1);
+const datas = ref<BucketDetail[]>([]);
+const totalPage = ref<number>(1);
+const pageSize: number = 6;
+const loadedList = ref<{ [key: number]: BucketDetail[] }>({});
+const isValid = ref<boolean>(true);
+const selectedColumn = ref<string>("전체")
+const showModal = ref<boolean>(false);
+const bucketName = ref<string>("");
 
-const columnSearchOptions = [
+const columnSearchOptions: string[] = [
   "전체",
   "Bucket Name",
   "Last Modified"
 ]
 
-const columnOptionValue = {
+const columnOptionValue: { [key: string]: string } = {
   "Bucket Name": "_name",
   "Last Modified": "_creation_date"
 }
@@ -174,7 +174,7 @@ const getBucket = async () => {
         APIurl += `&search_query=${filterKeyword.value}&col_query=${columnOptionValue[selectedColumn.value]}`;
       }
     }
-    const response = await restAPI.get(APIurl);
+    const response: BucketsResponsebody = await restAPI.get(APIurl);
     if (response) {
       if (response.code === SuccessResponseCode) {
         datas.value = response.result.message.result_details;

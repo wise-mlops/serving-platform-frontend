@@ -43,6 +43,7 @@
 
 <script setup lang="ts">
 import { SuccessResponseCode, ErrorResponseCode } from '~/assets/const/HttpResponseCode';
+
 const route = useRoute();
 
 definePageMeta({
@@ -51,12 +52,11 @@ definePageMeta({
     ],
 });
 
-const pageTitle = ref('Inference Service 테스트')
-
-const isValid = ref(true);
-const input = ref("");
+const pageTitle = ref<string>('Inference Service 테스트')
+const isValid = ref<boolean>(true);
+const input = ref<string>("");
 const inputValue = ref([]);
-const outputValue = ref("");
+const outputValue = ref<string>("");
 const modelFormat = route.query.model_format;
 
 const isText = computed(() => {

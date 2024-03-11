@@ -93,33 +93,33 @@ import { useDebouncedRef } from '~~/composables/common';
 const route = useRoute();
 const routePath = route.path;
 
-const pathList = ref([]);
-const currentPage = ref(1);
-const datas = ref([]);
-const filtered = ref("");
-const totalPage = ref(1);
-const pageSize = 10;
-const loadedList = ref({});
-const isValid = ref(true);
-const selectedColumn = ref("전체")
-const selectedBucket = ref("");
-const currentPath = ref("");
-const showModal = ref(false);
-const uploadedFile = ref([]);
-const newPath = ref("");
-const showInput = ref(false);
-const selectedObjects = ref([]);
-const selectClicked = ref(false);
-const sortedOption = ref('');
+const pathList = ref<string[]>([]);
+const currentPage = ref<number>(1);
+const datas = ref<ObjectDetail[]>([]);
+const filtered = ref<string>("");
+const totalPage = ref<number>(1);
+const pageSize: number = 10;
+const loadedList = ref<{ [key: number]: ObjectDetail[] }>({});
+const isValid = ref<boolean>(true);
+const selectedColumn = ref<string>("전체")
+const selectedBucket = ref<string>("");
+const currentPath = ref<string>("");
+const showModal = ref<boolean>(false);
+const uploadedFile = ref<File[]>([]);
+const newPath = ref<string>("");
+const showInput = ref<boolean>(false);
+const selectedObjects = ref<ObjectDetail[]>([]);
+const selectClicked = ref<boolean>(false);
+const sortedOption = ref<string>("");
 
-const columnSearchOptions = [
+const columnSearchOptions: string[] = [
   "전체",
   "Name",
   "Size",
   "Last Modified"
 ]
 
-const columnOptionValue = {
+const columnOptionValue: { [key: string]: string } = {
   Name: "_object_name",
   Size: "_size",
   "Last Modified": "_last_modified"
@@ -177,6 +177,7 @@ watch(selectedObjects, () => {
 onMounted(async () => {
   activeRouteName.value = routePath;
   pathList.value = routePath.split("/");
+  console.log(pathList.value)
   if (pathList.value.at(-1) === '') {
     pathList.value.pop();
   }
@@ -216,7 +217,7 @@ const sortList = async (event) => {
  * file인지 folder인지 알려주는 함수입니다.
  * @param name object name
  */
-const getFType = (name: string) => {
+const getFType = (name: string): "file" | "folder" => {
   if (name.at(-1) === "/") {
     return "folder"
   }
@@ -227,12 +228,12 @@ const getFType = (name: string) => {
  * path를 제외한 해당 file 혹은 folder의 이름을 알려주는 함수입니다.
  * @param name object name
  */
-const getFName = (name: string) => {
-  const nameSplit = name.split("/");
+const getFName = (name: string): string => {
+  const nameSplit: string[] = name.split("/");
   if (getFType(name) === "folder") {
-    return nameSplit.at(-2);
+    return nameSplit.at(-2) || '';
   }
-  return nameSplit.at(-1);
+  return nameSplit.at(-1) || '';
 }
 
 /**
@@ -321,10 +322,10 @@ const getFiles = async () => {
         APIurl += `recursive=false${sortedOption.value}`;
       }
     }
-    const response = await restAPI.get(APIurl);
+    const response: ObjectsResponsebody = await restAPI.get(APIurl);
     if (response) {
       if (response.code === SuccessResponseCode) {
-        datas.value = response.result.message.result_details;
+        datas.value = response.result.message.result_details
         totalPage.value = Math.ceil(response.result.message.total_result_details / pageSize);
         loadedList.value[currentPage.value] = datas.value;
       }
@@ -513,7 +514,6 @@ const copyURL = async (name: string) => {
     }
   }
 }
-
 
 </script>
 
