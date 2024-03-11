@@ -29,9 +29,8 @@
               <VaInput :label="'Search Keyword'" v-model="filterKeyword" class="search-input" @keyup.enter="search" />
               <VaButton class="search-button" @click="search">검색</VaButton>
             </div>
-            <VaDataTable class="services-card-table" :items="datas" :columns="servicesCol"
-              @filtered="filtered = $event.items;" sticky-header clickable hoverable @row:click="goDetail">
-
+            <VaDataTable class="services-card-table" :items="datas" :columns="servicesCol" sticky-header clickable
+              hoverable @row:click="goDetail" @columnSorted="sortList">
               <template #cell(status)="{ rowIndex, rowData }">
                 <VaPopover message="InferenceService is Ready" placement="left-bottom" color="#154ec19e"
                   v-if="rowData.status === 'True'">
@@ -76,12 +75,12 @@ const route = useRoute();
 const pageTitle = ref('Inference Services');
 const currentPage = ref(1);
 const datas = ref([]);
-const filtered = ref("");
 const totalPage = ref(1);
 const pageSize = 10;
 const loadedList = ref({});
 const isValid = ref(true);
 const selectedColumn = ref("전체")
+const sortedOption = ref('');
 
 const columnSearchOptions = [
   "전체",
@@ -135,19 +134,19 @@ onMounted(async () => {
 /**
  * 20초마다 자동으로 Inference Service의 리스트를 가져옵니다.
  */
-const autoGetList = setInterval(async () => {
-  isValid.value = false;
-  loadedList.value = {};
-  await getList();
-  isValid.value = true;
-}, 20000);
+// const autoGetList = setInterval(async () => {
+//   isValid.value = false;
+//   loadedList.value = {};
+//   await getList();
+//   isValid.value = true;
+// }, 20000);
 
 /**
  * 10초마다 자동으로 가져오는 것을 멈춥니다.
  */
-onUnmounted(() => {
-  clearInterval(autoGetList);
-})
+// onUnmounted(() => {
+//   clearInterval(autoGetList);
+// })
 
 /**
  * 방법 1. 검색창 내의 변화를 감지하여 입력값과 일치하는 리스트를 가져옵니다.
@@ -187,6 +186,28 @@ watch(currentPage, async () => {
   await getList();
 })
 
+const sortList = async (event) => {
+  const colName = event.columnName;
+  const sortValue = event.value;
+  loadedList.value = {};
+  if (sortValue) {
+    if (sortValue === 'asc') {
+      sortedOption.value = `&sort_query=false&sort_query_col=${colName}`
+    }
+    else if (sortValue === "desc") {
+      sortedOption.value = `&sort_query=true&sort_query_col=${colName}`
+    }
+  }
+  else {
+    sortedOption.value = ''
+  }
+  try {
+    await getList();
+  } catch (error) {
+    console.error('Error sorting data:', error);
+  }
+}
+
 /**
  * Inference Service의 리스트를 가져오는 함수입니다.
  */
@@ -196,17 +217,17 @@ const getList = async () => {
     datas.value = loadedList.value[currentPage.value];
   }
   else {
-    let APIurl;
+    let APIurl = `/kserve?page_index=${currentPage.value}&page_object=${pageSize}`;
     if (filterKeyword.value) {
       if (selectedColumn.value === '전체') {
-        APIurl = `/kserve?page=${currentPage.value}&search_query=${filterKeyword.value}`;
+        APIurl += `${sortedOption.value}&search_query=${filterKeyword.value}`;
       }
       else {
-        APIurl = `/kserve?page=${currentPage.value}&search_query=${filterKeyword.value}&col_query=${columnOptionValue[selectedColumn.value]}`;
+        APIurl += `${sortedOption.value}&search_query=${filterKeyword.value}&col_query=${columnOptionValue[selectedColumn.value]}`;
       }
     }
     else {
-      APIurl = `/kserve?page=${currentPage.value}`;
+      APIurl += `${sortedOption.value}`;
     }
     const response = await restAPI.get(APIurl);
     if (response) {

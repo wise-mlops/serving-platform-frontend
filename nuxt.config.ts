@@ -16,10 +16,13 @@ export default defineNuxtConfig({
     }
   },
   modules: ['@vuestic/nuxt'],
+  runtimeConfig: {
+    public: {
+      baseURL: 'http://local.api.kserve.labs.wisenut.com'
+    }
+  },
   vuestic: {
-    config: {
-
-    },
+    config: {},
     css: ['typography', 'reset']
   }
 })

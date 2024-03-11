@@ -98,7 +98,9 @@ const columnOptionValue = {
  * @param timeStamp: UTC 시각
  */
 const changeTime = (timeStamp: string) => {
-  const date = new Date(timeStamp);
+  const utc = new Date(timeStamp);
+  const kst = utc.setHours(utc.getHours() + 9);
+  const date = new Date(kst);
   const newDate = `${date.getFullYear()}/${date.getMonth()}/${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()} (GMT +9)`;
   return newDate
 }
@@ -163,17 +165,14 @@ const getBucket = async () => {
     datas.value = loadedList.value[currentPage.value];
   }
   else {
-    let APIurl;
+    let APIurl = `/bucket?page_index=${currentPage.value}&page_object=${pageSize}`;
     if (filterKeyword.value) {
       if (selectedColumn.value === '전체') {
-        APIurl = `/bucket?page=${currentPage.value}&search_query=${filterKeyword.value}`;
+        APIurl += `&search_query=${filterKeyword.value}`;
       }
       else {
-        APIurl = `/bucket?page=${currentPage.value}&search_query=${filterKeyword.value}&col_query=${columnOptionValue[selectedColumn.value]}`;
+        APIurl += `&search_query=${filterKeyword.value}&col_query=${columnOptionValue[selectedColumn.value]}`;
       }
-    }
-    else {
-      APIurl = `/bucket?page=${currentPage.value}`;
     }
     const response = await restAPI.get(APIurl);
     if (response) {

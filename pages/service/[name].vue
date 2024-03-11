@@ -29,19 +29,18 @@
                                         {{ $route.params.name }}
                                     </h5>
                                     <VaList class="details-list">
-                                        <VaListItem v-for="(key, index) in Object.keys(OverviewData.Info)" :key="index"
+                                        <VaListItem v-for="(key, index) in Object.keys(overviewData.info)" :key="index"
                                             class="list__item">
                                             <div class="details-left">
-                                                <h6 class="va-h6" v-if="key in columnOptionTitle">{{ columnOptionTitle[key]
-                                                }}</h6>
-                                                <h6 class="va-h6" v-else>{{ key }}</h6>
+                                                <h6 class="va-h6">{{ columnOptionTitle[key] }}</h6>
                                             </div>
                                             <VaListItemSection class="details-right">
-                                                <VaListItemLabel v-if="key === 'Status'">
-                                                    <h6 class="va-h6 status-text" v-if="OverviewData.Info[key] === 'True'">
+                                                <VaListItemLabel v-if="key === 'status'">
+                                                    <h6 class="va-h6 status-text"
+                                                        v-if="overviewData.info[key] === 'True'">
                                                         <VaPopover message="Status is deduced from the Ready Condition"
-                                                            class=" row align-center justify-left" placement="left-bottom"
-                                                            color="#154ec19e">
+                                                            class=" row align-center justify-left"
+                                                            placement="left-bottom" color="#154ec19e">
                                                             <VaIcon name="check_circle" color="success" />&nbspReady
                                                         </VaPopover>
                                                     </h6>
@@ -53,16 +52,16 @@
                                                     </h6>
                                                 </VaListItemLabel>
                                                 <VaListItemLabel v-else>
-                                                    <h6 class="va-h6">{{ OverviewData.Info[key] }}</h6>
+                                                    <h6 class="va-h6">{{ overviewData.info[key] }}</h6>
                                                 </VaListItemLabel>
                                             </VaListItemSection>
                                         </VaListItem>
                                     </VaList>
                                 </div>
                                 <div id="wisenut-tab-contents-bottom">
-                                    <h5 class="va-h5">InferenceService Conditions</h5>
-                                    <VaDataTable :items="OverviewData['InferenceService Conditions']" :columns="overviewCol"
-                                        sticky-header hoverable :animated="false">
+                                    <h5 class="va-h5">Inference Service Conditions</h5>
+                                    <VaDataTable :items="overviewData.inference_service_conditions"
+                                        :columns="overviewCol" sticky-header hoverable :animated="false">
                                         <template #cell(status)="{ rowIndex, rowData }">
                                             <VaPopover message="True" v-if="rowData.status === 'True'" color="primary">
                                                 <VaIcon name="check_circle" color="success" />
@@ -80,7 +79,7 @@
                                 </div>
                             </div>
                             <div id="wisenut-tab-contents" v-else-if="selectTab === 1">
-                                <VaList v-for="(category, index1) in Object.keys(DetailsData)" :key="index1"
+                                <VaList v-for="(category, index1) in Object.keys(detailsData)" :key="index1"
                                     :class="category">
                                     <h5 class="va-h5" v-if="index1 === 0">
                                         <VaIcon v-if="overviewStatus === 'True'" name="check_circle" color="success" />
@@ -88,18 +87,20 @@
                                         {{ $route.params.name }}
                                     </h5>
                                     <h5 class="va-h5" v-if="index1 === 1">{{ category }}</h5>
-                                    <VaListItem v-for="(key, index2) in Object.keys(DetailsData[category])" :key="index2"
-                                        class="list__item">
+                                    <VaListItem v-for="(key, index2) in Object.keys(detailsData[category])"
+                                        :key="index2" class="list__item">
                                         <div class="details-left">
                                             <h6 class="va-h6" v-if="key in columnOptionTitle">{{ columnOptionTitle[key]
-                                            }}</h6>
+                                                }}</h6>
                                             <h6 class="va-h6" v-else>{{ key }}</h6>
                                         </div>
                                         <VaListItemSection>
-                                            <VaListItemLabel v-if="key == 'Status'">
-                                                <h6 class="va-h6 status-text" v-if="DetailsData[category][key] === 'True'">
+                                            <VaListItemLabel v-if="key == 'status'">
+                                                <h6 class="va-h6 status-text"
+                                                    v-if="detailsData[category][key] === 'True'">
                                                     <VaPopover message="Status is deduced from the Ready Condition"
-                                                        class=" row align-center" placement="left-bottom" color="#154ec19e">
+                                                        class=" row align-center" placement="left-bottom"
+                                                        color="#154ec19e">
                                                         <VaIcon name="check_circle" color="success" />&nbspReady
                                                     </VaPopover>
                                                 </h6>
@@ -109,17 +110,17 @@
                                                         <VaIcon name="warning" color="warning" />
                                                     </VaPopover>
                                                 </h6>
-                                                <h6 class="va-h6" v-else>{{ DetailsData[category][key] }}</h6>
+                                                <h6 class="va-h6" v-else>{{ detailsData[category][key] }}</h6>
                                             </VaListItemLabel>
-                                            <VaListItemLabel v-else-if="key == 'creationTimestamp'">
+                                            <VaListItemLabel v-else-if="key == 'creation_timestamp'">
                                                 <h6 class="va-h6">
-                                                    <VaPopover :message="popoverTimeMsg(DetailsData[category][key])"
-                                                        color="primary">{{ changeTime(DetailsData[category][key]) }}
+                                                    <VaPopover :message="popoverTimeMsg(detailsData[category][key])"
+                                                        color="primary">{{ changeTime(detailsData[category][key]) }}
                                                     </VaPopover>
                                                 </h6>
                                             </VaListItemLabel>
                                             <VaListItemLabel v-else>
-                                                <h6 class="va-h6">{{ DetailsData[category][key] }}</h6>
+                                                <h6 class="va-h6">{{ detailsData[category][key] }}</h6>
                                             </VaListItemLabel>
                                         </VaListItemSection>
                                     </VaListItem>
@@ -156,14 +157,14 @@ definePageMeta({
 
 const route = useRoute();
 
-const OverviewData = ref({
-    Info: '',
-    'InferenceService Conditions': []
+const overviewData = ref({
+    info: '',
+    inference_service_conditions: []
 })
 
-const DetailsData = ref({
-    Info: '',
-    'Predictor: spec': ''
+const detailsData = ref({
+    info: '',
+    predictor_spec: ''
 })
 
 const pageTitle = ref('Inference Service 상세 보기')
@@ -182,9 +183,9 @@ onMounted(async () => {
         const response = await restAPI.get(`/kserve/detail/${route.params.name}`);
         if (response) {
             if (response.code === SuccessResponseCode) {
-                OverviewData.value = response.result.OVERVIEW;
-                overviewStatus.value = response.result.OVERVIEW.Info.Status;
-                DetailsData.value = response.result.DETAILS;
+                overviewData.value = response.result.overview;
+                overviewStatus.value = response.result.overview.info.status;
+                detailsData.value = response.result.details;
             }
             else {
                 console.log(response.message);
@@ -226,7 +227,7 @@ const changeTime = (timeStamp: string) => {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    height: 90%;
+    height: 80%;
     margin: 5px;
 }
 

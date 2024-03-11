@@ -51,14 +51,13 @@
 <script setup lang="ts">
 import { SuccessResponseCode } from '~/assets/const/HttpResponseCode';
 import JsonEditorVue from '~/components/JsonEditorVue.vue';
-import { sampleT5Input } from '~/composables/sample.t5';
 
 const route = useRoute();
 
 const pageTitle = ref('T5 모델 테스트')
 const isValid = ref(true);
 const name = ref("nlp-torchserve");
-const inputTextValue = ref(sampleT5Input);
+const inputTextValue = ref();
 const inputValue = ref({
     role: "",
     content: ""
@@ -75,10 +74,14 @@ const isText = computed(() => {
 })
 
 const isValue = computed(() => {
-    if (inputMode.value === 0) {
-        return inputValueList.value.length > 0
+    try {
+        if (inputMode.value === 0) {
+            return inputValueList.value.length > 0
+        }
+        return inputTextValue.value.length > 0
+    } catch (error) {
+        return false;
     }
-    return inputTextValue.value.length > 0
 })
 
 onMounted(() => {
@@ -87,7 +90,7 @@ onMounted(() => {
 
 watch(inputMode, () => {
     if (inputMode.value === 0) {
-        inputTextValue.value = sampleT5Input
+        inputTextValue.value = ref().value;
     }
     if (inputMode.value === 1) {
         inputValueList.value = []

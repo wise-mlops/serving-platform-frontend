@@ -30,7 +30,7 @@
       <VaInnerLoading :loading="!isValid" class="storage-card-loading">
         <VaCard outlined class="services-card">
           <VaCardTitle />
-          {{ selectedObjects.object_name }}
+          {{ selectedObjects._object_name }}
           <VaCardContent class="services-card-content">
             <div class="services-card-top" v-if="mode === 'debounce'">
               <VaSelect v-model="selectedColumn" :options="columnSearchOptions" placeholder="전체"
@@ -45,14 +45,14 @@
             </div>
             <VaDataTable class="services-card-table" :items="datas" :columns="storageCol" selectable
               v-model="selectedObjects" @filtered="filtered = $event.items;" sticky-header clickable hoverable
-              @row:click="selectPath">
+              @row:click="selectPath" @columnSorted="sortList">
 
-              <template #cell(object_name)="{ rowIndex, rowData }">
+              <template #cell(_object_name)="{ rowIndex, rowData }">
                 <span class="name-area clickable">
                   <VaIcon name="folder" class="mr-1 clickable" color="primary"
-                    v-if="rowData.object_name.slice(-1) === '/'" />
+                    v-if="rowData._object_name.slice(-1) === '/'" />
                   <VaIcon name="description" class="mr-1 clickable" color="primary" v-else />
-                  {{ getFName(rowData.object_name) }}
+                  {{ getFName(rowData._object_name) }}
                 </span>
               </template>
 
@@ -62,11 +62,11 @@
               </template>
 
               <template #cell(download)="{ rowIndex, rowData }">
-                <VaButton size="small" class="px-2" @click="download(rowData.object_name)">다운로드</VaButton>
+                <VaButton size="small" class="px-2" @click="download(rowData._object_name)">다운로드</VaButton>
               </template>
 
               <template #cell(share)="{ rowIndex, rowData }">
-                <VaIcon name="share" color="primary" @click="copyURL(rowData.object_name)" size="large" />
+                <VaIcon name="share" color="primary" @click="copyURL(rowData._object_name)" size="large" />
               </template>
             </VaDataTable>
             <VaPagination v-model="currentPage" :pages="totalPage" :visible-pages="5" gapped />
@@ -110,6 +110,7 @@ const newPath = ref("");
 const showInput = ref(false);
 const selectedObjects = ref([]);
 const selectClicked = ref(false);
+const sortedOption = ref('');
 
 const columnSearchOptions = [
   "전체",
@@ -119,13 +120,16 @@ const columnSearchOptions = [
 ]
 
 const columnOptionValue = {
-  Name: "object_name",
+  Name: "_object_name",
   Size: "_size",
   "Last Modified": "_last_modified"
 }
 
 const popoverTimeMsg = (time: string) => {
-  const msg = `Local:  ${new Date(time)}
+  const utc = new Date(time);
+  const kst = utc.setHours(utc.getHours() + 9);
+  const date = new Date(kst);
+  const msg = `Local:  ${new Date(date)}
     UTC:  ${time}`
   return msg
 }
@@ -135,7 +139,9 @@ const popoverTimeMsg = (time: string) => {
  * @param timeStamp: UTC 시각
  */
 const changeTime = (timeStamp: string) => {
-  const date = new Date(timeStamp);
+  const utc = new Date(timeStamp);
+  const kst = utc.setHours(utc.getHours() + 9);
+  const date = new Date(kst);
   const timeDiff = nowTimeDiff(date);
   return timeDiff
 }
@@ -183,6 +189,28 @@ onMounted(async () => {
   }
   isValid.value = true;
 })
+
+const sortList = async (event) => {
+  const colName = event.columnName;
+  const sortValue = event.value;
+  loadedList.value = {};
+  if (sortValue) {
+    if (sortValue === 'asc') {
+      sortedOption.value = `&sort_query=false&sort_query_col=${colName}`
+    }
+    else if (sortValue === "desc") {
+      sortedOption.value = `&sort_query=true&sort_query_col=${colName}`
+    }
+  }
+  else {
+    sortedOption.value = ''
+  }
+  try {
+    await getFiles();
+  } catch (error) {
+    console.error('Error sorting data:', error);
+  }
+}
 
 /**
  * file인지 folder인지 알려주는 함수입니다.
@@ -276,21 +304,21 @@ const getFiles = async () => {
     datas.value = loadedList.value[currentPage.value];
   }
   else {
-    let APIurl;
+    let APIurl = `/bucket/object/${selectedBucket.value}?page_index=${currentPage.value}&page_object=${pageSize}&`;
     if (filterKeyword.value) {
       if (selectedColumn.value === '전체') {
-        APIurl = `/bucket/object/${selectedBucket.value}?prefix=${currentPath.value}&recursive=true&page=${currentPage.value}&search_query=${filterKeyword.value}`;
+        APIurl += `prefix=${currentPath.value}&recursive=true&search_query=${filterKeyword.value}${sortedOption.value}`;
       }
       else {
-        APIurl = `/bucket/object/${selectedBucket.value}?prefix=${currentPath.value}&recursive=true&page=${currentPage.value}&search_query=${filterKeyword.value}&col_query=${columnOptionValue[selectedColumn.value]}`;
+        APIurl += `prefix=${currentPath.value}&recursive=true&search_query=${filterKeyword.value}&col_query=${columnOptionValue[selectedColumn.value]}${sortedOption.value}`;
       }
     }
     else {
       if (currentPath.value) {
-        APIurl = `/bucket/object/${selectedBucket.value}?prefix=${currentPath.value}&recursive=false&page=${currentPage.value}`;
+        APIurl += `prefix=${currentPath.value}&recursive=false${sortedOption.value}`;
       }
       else {
-        APIurl = `/bucket/object/${selectedBucket.value}?recursive=false&page=${currentPage.value}`;
+        APIurl += `recursive=false${sortedOption.value}`;
       }
     }
     const response = await restAPI.get(APIurl);
@@ -316,7 +344,7 @@ const selectPath = (event: any) => {
   const cellIndex = event.event.target.cellIndex;
   const parentCellIndex = event.event.target.parentNode.cellIndex;
   if ((cellIndex > 0 && cellIndex < 4) || (parentCellIndex > 0 && parentCellIndex < 4)) {
-    const name = event.item.object_name;
+    const name = event.item._object_name;
     if (getFType(name) === "folder") {
       const fName = getFName(name);
       if (routePath.at(-1) === '/') {
@@ -336,7 +364,7 @@ const removeItem = async () => {
   isValid.value = false;
   const removeItems: string[] = [];
   selectedObjects.value.forEach(obj => {
-    removeItems.push(obj.object_name);
+    removeItems.push(obj._object_name);
   });
   try {
     const response = await restAPI.del(`/bucket/object/${selectedBucket.value}`, removeItems);
@@ -371,24 +399,16 @@ const removeItem = async () => {
 const download = async (name: string) => {
   isValid.value = false;
   try {
-    const response = await restAPI.post(`/bucket/object/${selectedBucket.value}/download/url?object_name=${name}`);
-    if (response) {
-      if (response.code === SuccessResponseCode) {
-        const downloadLink = document.createElement("a");
-        downloadLink.href = response.result.message;
-        downloadLink.download = getFName(name);
-        downloadLink.click();
-      }
-      else {
-        if (response.code === NotFoundErrorResponseCode) {
-          alert('잘못된 요청입니다.');
-        }
-        console.log(response.message);
-      }
-    }
+    const APIurl = `/bucket/object/${selectedBucket.value}/download?object_name=${name}`;
+    const response = await restAPI.get(APIurl);
+    const baseURL = useRuntimeConfig().public.baseURL;
+    const downloadLink = document.createElement("a");
+    downloadLink.href = baseURL + APIurl;
+    downloadLink.download = getFName(name);
+    downloadLink.click();
   }
   catch (error) {
-    console.error(error);
+    // console.error(error);
   }
   finally {
     isValid.value = true;
