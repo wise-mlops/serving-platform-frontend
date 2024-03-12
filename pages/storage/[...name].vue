@@ -48,7 +48,8 @@
                   <VaIcon name="folder" class="mr-1 clickable" color="primary"
                     v-if="rowData._object_name.slice(-1) === '/'" />
                   <VaIcon name="description" class="mr-1 clickable" color="primary" v-else />
-                  <VaPopover :message="rowData._object_name" color="primary"> {{ getFName(rowData._object_name) }}
+                  <VaPopover :message="rowData._object_name" color="primary" class="clickable"> {{
+              getFName(rowData._object_name) }}
                   </VaPopover>
                 </span>
               </template>
@@ -335,7 +336,8 @@ const getFiles = async () => {
 const selectPath = (event: any) => {
   const cellIndex = event.event.target.cellIndex;
   const parentCellIndex = event.event.target.parentNode.cellIndex;
-  if ((cellIndex > 0 && cellIndex < 4) || (parentCellIndex > 0 && parentCellIndex < 4)) {
+  const grandParentCellIndex = event.event.target.parentNode.parentNode.cellIndex;
+  if ((cellIndex > 0 && cellIndex < 4) || (parentCellIndex > 0 && parentCellIndex < 4) || (grandParentCellIndex > 0 && grandParentCellIndex < 4)) {
     const name = event.item._object_name;
     if (getFType(name) === "folder") {
       const fName = getFName(name);
