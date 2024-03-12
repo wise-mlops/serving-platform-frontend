@@ -17,20 +17,16 @@
       </template>
 
       <template #right>
-        <VaButton @click="removeItem()" color="danger" preset="primary" border-color="danger" icon="delete"
-          :disabled="!selectClicked">
-          삭제
-        </VaButton>
-        <VaButton @click="showModal = !showModal" class="ml-2" icon="upload">
-          업로드
-        </VaButton>
+        <VaButton @click="showModal = !showModal" icon="upload">업로드</VaButton>
+        <VaButton @click="download()" icon="download" :disabled="!selectClicked" class="ml-2">다운로드</VaButton>
+        <VaButton @click="removeItem()" color="danger" preset="primary" border-color="danger" icon="delete" class="ml-2"
+          :disabled="!selectClicked">삭제</VaButton>
       </template>
     </VaNavbar>
     <div class="px-3 md12 xs12 lg12 storage-card-content">
       <VaInnerLoading :loading="!isValid" class="storage-card-loading">
         <VaCard outlined class="services-card">
           <VaCardTitle />
-          {{ selectedObjects._object_name }}
           <VaCardContent class="services-card-content">
             <div class="services-card-top" v-if="mode === 'debounce'">
               <VaSelect v-model="selectedColumn" :options="columnSearchOptions" placeholder="전체"
@@ -52,7 +48,8 @@
                   <VaIcon name="folder" class="mr-1 clickable" color="primary"
                     v-if="rowData._object_name.slice(-1) === '/'" />
                   <VaIcon name="description" class="mr-1 clickable" color="primary" v-else />
-                  {{ getFName(rowData._object_name) }}
+                  <VaPopover :message="rowData._object_name" color="primary"> {{ getFName(rowData._object_name) }}
+                  </VaPopover>
                 </span>
               </template>
 
@@ -60,11 +57,6 @@
                 <VaPopover :message="popoverTimeMsg(rowData._last_modified)" color="primary"
                   v-if="rowData._last_modified">{{ changeTime(rowData._last_modified) }}</VaPopover>
               </template>
-
-              <template #cell(download)="{ rowIndex, rowData }">
-                <VaButton size="small" class="px-2" @click="download(rowData._object_name)">다운로드</VaButton>
-              </template>
-
               <template #cell(share)="{ rowIndex, rowData }">
                 <VaIcon name="share" color="primary" @click="copyURL(rowData._object_name)" size="large" />
               </template>
@@ -177,7 +169,6 @@ watch(selectedObjects, () => {
 onMounted(async () => {
   activeRouteName.value = routePath;
   pathList.value = routePath.split("/");
-  console.log(pathList.value)
   if (pathList.value.at(-1) === '') {
     pathList.value.pop();
   }
@@ -397,15 +388,21 @@ const removeItem = async () => {
 /**
  * object를 다운로드합니다.
  */
-const download = async (name: string) => {
+const download = async () => {
   isValid.value = false;
   try {
-    const APIurl = `/bucket/object/${selectedBucket.value}/download?object_name=${name}`;
+    let objects: string[] = []
+    selectedObjects.value.forEach(obj => {
+      objects.push(`object_names=${obj._object_name}`);
+    });
+    console.log(currentPath.value);
+    const objectsQuery: string = objects.join('&');
+    const APIurl = `/bucket/object/${selectedBucket.value}/download?${objectsQuery}`;
     const response = await restAPI.get(APIurl);
     const baseURL = useRuntimeConfig().public.baseURL;
     const downloadLink = document.createElement("a");
     downloadLink.href = baseURL + APIurl;
-    downloadLink.download = getFName(name);
+    downloadLink.download = currentPath.value;
     downloadLink.click();
   }
   catch (error) {

@@ -21,8 +21,8 @@
                                     </VaTab>
                                 </template>
                             </VaTabs>
-                            <div id="wisenut-tab-contents" v-if="selectTab === 0">
-                                <div id="wisenut-tab-contents-top">
+                            <div id="service-tab-overview-contents" v-if="selectTab === 0">
+                                <div id="service-tab-contents-top">
                                     <h5 class="va-h5">
                                         <VaIcon v-if="overviewStatus === 'True'" name="check_circle" color="success" />
                                         <VaIcon v-else name="warning" color="warning" />
@@ -58,7 +58,7 @@
                                         </VaListItem>
                                     </VaList>
                                 </div>
-                                <div id="wisenut-tab-contents-bottom">
+                                <div id="service-tab-contents-bottom">
                                     <h5 class="va-h5">Inference Service Conditions</h5>
                                     <VaDataTable :items="overviewData.inference_service_conditions"
                                         :columns="overviewCol" sticky-header hoverable :animated="false">
@@ -78,7 +78,7 @@
                                     </VaDataTable>
                                 </div>
                             </div>
-                            <div id="wisenut-tab-contents" v-else-if="selectTab === 1">
+                            <div id="service-tab-details-contents" v-else-if="selectTab === 1">
                                 <VaList v-for="(category, index1) in Object.keys(detailsData)" :key="index1"
                                     :class="category">
                                     <h5 class="va-h5" v-if="index1 === 0">
@@ -86,7 +86,7 @@
                                         <VaIcon v-else name="warning" color="warning" />
                                         {{ $route.params.name }}
                                     </h5>
-                                    <h5 class="va-h5" v-if="index1 === 1">{{ category }}</h5>
+                                    <h5 class="va-h5" v-if="index1 === 1">Predictor: spec</h5>
                                     <VaListItem v-for="(key, index2) in Object.keys(detailsData[category])"
                                         :key="index2" class="list__item">
                                         <div class="details-left">
@@ -235,15 +235,23 @@ const changeTime = (timeStamp: string) => {
     width: 20%;
 }
 
-#wisenut-tab-contents {
+#service-tab-overview-contents,
+#service-tab-details-contents {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    height: 80%;
     margin: 5px;
 }
 
-#wisenut-tab-contents-top {
+#service-tab-overview-contents {
+    height: 90%;
+}
+
+#service-tab-details-contents {
+    height: 80%;
+}
+
+#service-tab-contents-top {
     height: 40%;
 }
 
@@ -251,7 +259,7 @@ const changeTime = (timeStamp: string) => {
     width: 100%;
 }
 
-#wisenut-tab-contents-bottom {
+#service-tab-contents-bottom {
     height: 60%;
 }
 
