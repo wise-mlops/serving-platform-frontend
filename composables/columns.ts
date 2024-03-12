@@ -15,11 +15,10 @@ export const overviewCol = ref([
 ])
 
 export const storageCol = ref([
-  { label: 'Name', key: '_object_name', sortable: true, width: '29%' },
-  { label: 'Size', key: '_size', sortable: true, width: '25%' },
-  { label: 'Last Modified', key: '_last_modified', sortable: true, width: '25%' },
-  { label: 'Download', key: 'download', sortable: false, width: '13%' },
-  { label: 'Share', key: 'share', sortable: false, width: '13%' }
+  { label: 'Name', key: '_object_name', sortable: true, width: '32%' },
+  { label: 'Size', key: '_size', sortable: true, width: '28%' },
+  { label: 'Last Modified', key: '_last_modified', sortable: true, width: '28%' },
+  { label: 'Share', key: 'share', sortable: false, width: '17%' }
 ])
 
 export const columnOptionTitle = {
