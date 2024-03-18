@@ -18,9 +18,10 @@
     "@vue-flow/minimap": "1.4.0",
     "@vue-flow/node-toolbar": "1.1.0",
     "@vuestic/nuxt": "^1.0.19",
-    "json-editor-vue": "^0.12.0",
     "mitt": "^3.0.1",
     "moment": "^2.30.1",
+    "monaco-editor": "^0.47.0",
+    "nuxt-monaco-editor": "^1.2.7",
     "sanitize-html": "2.11.0",
     "sass": "1.70.0",
     "vue": "^3.4.15"

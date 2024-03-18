@@ -15,7 +15,8 @@ export default defineNuxtConfig({
       mode: 'out-in'
     }
   },
-  modules: ['@vuestic/nuxt'],
+  css: ['~/assets/css/index.css'],
+  modules: ['@vuestic/nuxt', 'nuxt-monaco-editor'],
   runtimeConfig: {
     public: {
       baseURL: 'http://local.api.kserve.labs.wisenut.com'

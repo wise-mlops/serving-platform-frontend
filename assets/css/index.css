@@ -1,0 +1,11 @@
+/* font 관련 설정*/
+@font-face {
+    font-family: 'D2Coding';
+    src: url('../fonts/D2Coding.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+.monaco-editor span {
+    font-family: 'D2Coding', serif !important;
+}

@@ -230,7 +230,7 @@ const getList = async () => {
  * Inference Service 등록 페이지로 이동합니다.
  */
 const goAdd = () => {
-  router.push('/service/add');
+  router.push('/services/add');
 }
 
 /**
@@ -248,7 +248,7 @@ const goDetail = (event: any) => {
     }
     else {
       const name = event.item.name;
-      navigateTo(`/service/${name}`);
+      navigateTo(`/services/${name}`);
     }
   }
 }
