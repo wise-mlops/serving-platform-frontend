@@ -10,3 +10,9 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
 })
 </script>
+
+<style>
+.monaco-editor span {
+    font-family: 'D2Coding', serif !important;
+}
+</style>

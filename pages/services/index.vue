@@ -53,7 +53,7 @@
               </template>
 
               <template #cell(remove)="{ rowIndex, rowData }">
-                <VaButton size="small" class="px-2" @click="removeItem(rowData.name)">삭제</VaButton>
+                <VaButton size="small" class="px-2" @click="removeConfirm(rowData.name)">삭제</VaButton>
               </template>
             </VaDataTable>
             <VaPagination v-model="currentPage" :pages="totalPage" :visible-pages="5" gapped class="pagination" />
@@ -68,6 +68,8 @@
 import { servicesCol } from '~~/composables/columns';
 import { NotFoundErrorResponseCode, SuccessResponseCode } from '~~/assets/const/HttpResponseCode'
 import { useDebouncedRef } from '~~/composables/common';
+import { useModal } from 'vuestic-ui'
+const { confirm } = useModal()
 
 const router = useRouter();
 const route = useRoute();
@@ -174,10 +176,10 @@ const sortList = async (event) => {
   loadedList.value = {};
   if (sortValue) {
     if (sortValue === 'asc') {
-      sortedOption.value = `&sort_query=false&sort_query_col=${colName}`
+      sortedOption.value = `&sort=true&sort_column=${colName}`
     }
     else if (sortValue === "desc") {
-      sortedOption.value = `&sort_query=true&sort_query_col=${colName}`
+      sortedOption.value = `&sort=false&sort_column=${colName}`
     }
   }
   else {
@@ -199,13 +201,13 @@ const getList = async () => {
     datas.value = loadedList.value[currentPage.value];
   }
   else {
-    let APIurl = `/kserve?page_index=${currentPage.value}&page_object=${pageSize}`;
+    let APIurl = `/kserve?page_index=${currentPage.value}&page_size=${pageSize}`;
     if (filterKeyword.value) {
       if (selectedColumn.value === '전체') {
-        APIurl += `${sortedOption.value}&search_query=${filterKeyword.value}`;
+        APIurl += `${sortedOption.value}&search_keyword=${filterKeyword.value}`;
       }
       else {
-        APIurl += `${sortedOption.value}&search_query=${filterKeyword.value}&col_query=${columnOptionValue[selectedColumn.value]}`;
+        APIurl += `${sortedOption.value}&search_keyword=${filterKeyword.value}&search_column=${columnOptionValue[selectedColumn.value]}`;
       }
     }
     else {
@@ -262,6 +264,15 @@ const goTest = async (name: string, status: string, modelFormat: string) => {
   }
   else {
     alert('Inference Service의 상태가 Ready일 때만 테스트 가능합니다.');
+  }
+}
+
+/**
+ * 삭제 진행 여부를 확인하는 함수입니다.
+ */
+const removeConfirm = async (name: string) => {
+  if (await confirm('삭제를 진행하겠습니까?')) {
+    removeItem(name);
   }
 }
 

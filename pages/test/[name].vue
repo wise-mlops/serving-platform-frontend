@@ -32,8 +32,8 @@
             <VaCard outlined class="test-card">
                 <VaCardTitle style="font-size: medium;">Output</VaCardTitle>
                 <VaCardContent class="test-card-content">
-                    <VaTextarea v-model="outputValue" class="test-textarea" readonly autosize
-                        placeholder="compute 버튼을 눌러주세요." :maxRows="1" />
+                    <VaTextarea v-model="outputValue" class="test-textarea" readonly :resize="false"
+                        placeholder="compute 버튼을 눌러주세요." />
                 </VaCardContent>
             </VaCard>
         </VaInnerLoading>
