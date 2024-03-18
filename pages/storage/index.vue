@@ -45,7 +45,7 @@
                   </VaListItemLabel>
                 </VaListItemSection>
                 <VaListItemSection icon>
-                  <VaIcon name="delete_forever" @click="removeBucket(data._name)" size="large" color="info" />
+                  <VaIcon name="delete_forever" @click="removeConfirm(data._name)" size="large" color="info" />
                 </VaListItemSection>
               </VaListItem>
             </VaList>
@@ -67,6 +67,8 @@
 <script setup lang="ts">
 import { SuccessResponseCode, ErrorResponseCode, DuplicatedErrorResponseCode } from '~~/assets/const/HttpResponseCode'
 import { useDebouncedRef } from '~~/composables/common';
+import { useModal } from 'vuestic-ui'
+const { confirm } = useModal()
 
 const route = useRoute();
 const router = useRouter();
@@ -165,13 +167,13 @@ const getBucket = async () => {
     datas.value = loadedList.value[currentPage.value];
   }
   else {
-    let APIurl = `/bucket?page_index=${currentPage.value}&page_object=${pageSize}`;
+    let APIurl = `/bucket?page_index=${currentPage.value}&page_size=${pageSize}`;
     if (filterKeyword.value) {
       if (selectedColumn.value === '전체') {
-        APIurl += `&search_query=${filterKeyword.value}`;
+        APIurl += `&search_keyword=${filterKeyword.value}`;
       }
       else {
-        APIurl += `&search_query=${filterKeyword.value}&col_query=${columnOptionValue[selectedColumn.value]}`;
+        APIurl += `&search_keyword=${filterKeyword.value}&search_column=${columnOptionValue[selectedColumn.value]}`;
       }
     }
     const response: BucketsResponsebody = await restAPI.get(APIurl);
@@ -195,6 +197,15 @@ const getBucket = async () => {
  */
 const goBucket = (idx: number) => {
   router.push(`/storage/${datas.value[idx]._name}`);
+}
+
+/**
+ * 삭제 진행 여부를 확인하는 함수입니다.
+ */
+const removeConfirm = async (name: string) => {
+  if (await confirm('삭제를 진행하겠습니까?')) {
+    removeBucket(name);
+  }
 }
 
 /**

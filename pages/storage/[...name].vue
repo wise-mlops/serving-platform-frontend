@@ -19,8 +19,8 @@
       <template #right>
         <VaButton @click="showModal = !showModal" icon="upload">업로드</VaButton>
         <VaButton @click="download()" icon="download" :disabled="!selectClicked" class="ml-2">다운로드</VaButton>
-        <VaButton @click="removeItem()" color="danger" preset="primary" border-color="danger" icon="delete" class="ml-2"
-          :disabled="!selectClicked">삭제</VaButton>
+        <VaButton @click="removeConfirm()" color="danger" preset="primary" border-color="danger" icon="delete"
+          class="ml-2" :disabled="!selectClicked">삭제</VaButton>
       </template>
     </VaNavbar>
     <div class="px-3 md12 xs12 lg12 storage-card-content">
@@ -82,6 +82,8 @@
 import { storageCol } from '~~/composables/columns';
 import { DuplicatedErrorResponseCode, NotFoundErrorResponseCode, SuccessResponseCode } from '~~/assets/const/HttpResponseCode'
 import { useDebouncedRef } from '~~/composables/common';
+import { useModal } from 'vuestic-ui'
+const { confirm } = useModal()
 
 const route = useRoute();
 const routePath = route.path;
@@ -189,10 +191,10 @@ const sortList = async (event) => {
   loadedList.value = {};
   if (sortValue) {
     if (sortValue === 'asc') {
-      sortedOption.value = `&sort_query=false&sort_query_col=${colName}`
+      sortedOption.value = `&sort=true&sort_column=${colName}`
     }
     else if (sortValue === "desc") {
-      sortedOption.value = `&sort_query=true&sort_query_col=${colName}`
+      sortedOption.value = `&sort=false&sort_column=${colName}`
     }
   }
   else {
@@ -297,13 +299,13 @@ const getFiles = async () => {
     datas.value = loadedList.value[currentPage.value];
   }
   else {
-    let APIurl = `/bucket/object/${selectedBucket.value}?page_index=${currentPage.value}&page_object=${pageSize}&`;
+    let APIurl = `/bucket/object/${selectedBucket.value}?page_index=${currentPage.value}&page_size=${pageSize}&`;
     if (filterKeyword.value) {
       if (selectedColumn.value === '전체') {
-        APIurl += `prefix=${currentPath.value}&recursive=true&search_query=${filterKeyword.value}${sortedOption.value}`;
+        APIurl += `prefix=${currentPath.value}&recursive=true&search_keyword=${filterKeyword.value}${sortedOption.value}`;
       }
       else {
-        APIurl += `prefix=${currentPath.value}&recursive=true&search_query=${filterKeyword.value}&col_query=${columnOptionValue[selectedColumn.value]}${sortedOption.value}`;
+        APIurl += `prefix=${currentPath.value}&recursive=true&search_keyword=${filterKeyword.value}&search_column=${columnOptionValue[selectedColumn.value]}${sortedOption.value}`;
       }
     }
     else {
@@ -352,16 +354,26 @@ const selectPath = (event: any) => {
 }
 
 /**
+ * 삭제 진행 여부를 확인하는 함수입니다.
+ */
+const removeConfirm = async () => {
+  if (await confirm('삭제를 진행하겠습니까?')) {
+    removeItem();
+  }
+}
+
+/**
  * object를 삭제합니다.
  */
 const removeItem = async () => {
   isValid.value = false;
   const removeItems: string[] = [];
   selectedObjects.value.forEach(obj => {
-    removeItems.push(obj._object_name);
+    removeItems.push(`object_name=${obj._object_name}`);
   });
+  const removeQuery: string = removeItems.join('&');
   try {
-    const response = await restAPI.del(`/bucket/object/${selectedBucket.value}`, removeItems);
+    const response = await restAPI.del(`/bucket/object/${selectedBucket.value}?${removeQuery}`);
     if (response) {
       if (response.code === SuccessResponseCode) {
         currentPage.value = 1;
@@ -397,7 +409,6 @@ const download = async () => {
     selectedObjects.value.forEach(obj => {
       objects.push(`object_names=${obj._object_name}`);
     });
-    console.log(currentPath.value);
     const objectsQuery: string = objects.join('&');
     const APIurl = `/bucket/object/${selectedBucket.value}/download?${objectsQuery}`;
     const response = await restAPI.get(APIurl);
@@ -442,7 +453,7 @@ const uploadObject = async (hide) => {
     let url;
     const uploadPath = currentPath.value.slice(0, -1);
     if (uploadPath) {
-      url = `/bucket/object/${selectedBucket.value}?object_name=${uploadPath}`;
+      url = `/bucket/object/${selectedBucket.value}?folder_path=${uploadPath}`;
     }
     else {
       url = `/bucket/object/${selectedBucket.value}`;
