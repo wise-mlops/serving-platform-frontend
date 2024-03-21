@@ -225,7 +225,7 @@ const removeBucket = async (name: string) => {
       }, 2000);
     }
     else {
-      if (response.code === ErrorResponseCode) {
+      if (response.code === DuplicatedErrorResponseCode) {
         alert("비어있는 버킷만 삭제가 가능합니다.");
       }
       console.log(response.message);
