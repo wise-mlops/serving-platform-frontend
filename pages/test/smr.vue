@@ -16,29 +16,25 @@
                 <VaCardContent class="test-card-content" v-if="mode === 'Form'">
                     <VaList>
                         <VaListItem class="input-set-row">
-                            <VaSelect v-model="model" class="model" :options="t5modelOptions" placeholder="사용할 모델 종류"
-                                label="model" :title="guide.model" />
-                            <VaInput v-model="batchSize" class="batch-size ml-2" placeholder="모델 병렬 처리 단위"
-                                label="batch size" type="number" :min="1" :title="guide.batch_size"
-                                :rules="[(bs) => bs > 0 || `Batch Size must be greater than one`]" />
+                            <VaInput v-model="topK" class="top-k" label="Top K" type="number" :min="1"
+                                :rules="[(tk) => tk > 0 || `Top K must be greater than one`]" :title="guide.topk" />
+                            <VaInput v-model="batchSize" class="batch-size ml-2" label="batch size" type="number"
+                                :min="1" :rules="[(bs) => bs > 0 || `Batch Size must be greater than one`]"
+                                :title="guide.batch_size" />
                         </VaListItem>
                         <VaListItem class="input-set">
-                            <VaInput v-model="question" class="question" placeholder="question을 입력해주세요."
-                                label="question" :title="guide.messages.question" />
-                        </VaListItem>
-                        <VaListItem class="input-set">
-                            <VaTextarea v-model="context" class="context" :resize="false" placeholder="context를 입력해주세요."
-                                label="Context" :title="guide.messages.context" />
-                            <VaButton class="context-button" @click=addContext() :disabled="!isValidContext">등록
+                            <VaTextarea v-model="text" class="text" :resize="false" placeholder="질의문 입력해주세요."
+                                label="text" :title="guide.text[0]" />
+                            <VaButton class="text-button" @click=addText() :disabled="!isValidText">등록
                             </VaButton>
                         </VaListItem>
                     </VaList>
-                    <VaScrollContainer class="context-container" vertical>
-                        <span v-if="contextList.length === 0">Context를 한 개 이상 등록해주세요.</span>
+                    <VaScrollContainer class="text-container" vertical>
+                        <span v-if="textList.length === 0">text를 한 개 이상 등록해주세요.</span>
                         <VaList>
-                            <VaListItem v-for="(data, index) in contextList" :key="index" class="context-item">
-                                <span class="context-item-text">{{ data }}</span>
-                                <va-button icon="close" preset="secondary" color="danger" class="context-item-del"
+                            <VaListItem v-for="(data, index) in textList" :key="index" class="text-item">
+                                <span class="text-item-text">{{ data }}</span>
+                                <va-button icon="close" preset="secondary" color="danger" class="text-item-del"
                                     v-on:click="delBtn(index)" />
                             </VaListItem>
                         </VaList>
@@ -66,23 +62,21 @@
 
 <script setup lang="ts">
 import { NotFoundErrorResponseCode, SuccessResponseCode } from '~/assets/const/HttpResponseCode';
-import { t5modelOptions } from "~/assets/data/model";
 import { useModal } from 'vuestic-ui'
 const { confirm } = useModal()
 
 const route = useRoute();
 
-const pageTitle = ref<string>('질의 응답 서비스')
-const name = ref<string>("qa");
+const pageTitle = ref<string>('생성 요약 서비스')
+const name = ref<string>("smr");
 
 // 입력 값
-const model = ref<string>("t5-base-fid");
+const topK = ref<string>("1");
 const batchSize = ref<string>("1");
-const question = ref<string>("");
-const context = ref<string>("");
+const text = ref<string>("");
 const editorValue = ref<string>("");
 
-const contextList = ref<string[]>([]);
+const textList = ref<string[]>([]);
 const outputValue = ref<string>("");
 const inputMode = ref<number>(0);
 const inputRadio: { text: string, value: number }[] = [{ text: "Form", value: 0 }, { text: "Editor", value: 1 }]
@@ -91,46 +85,37 @@ const bodySave = ref<string>("");
 
 // 유효성 체크
 const isValid = ref<boolean>(true);
-const isValidContext = ref<boolean>(false);
+const isValidText = ref<boolean>(false);
 
 /**
  * Form의 유효성을 판단합니다.
  */
 const isFormValid = computed(() => {
-    const isGreaterThanZero = parseInt(batchSize.value) > 0;
-    const questionLength = question.value.trim().length;
-    const contextLength = contextList.value.length;
-    return isGreaterThanZero && questionLength > 0 && contextLength > 0;
+    const topKGreaterThanZero = parseInt(topK.value) > 0;
+    const batchSizeGreaterThanZero = parseInt(batchSize.value) > 0;
+    const textLength = textList.value.length;
+    return topKGreaterThanZero && batchSizeGreaterThanZero && textLength > 0;
 })
 
-const guide = {
-    model: `사용할 모델 종류
-- t5-small-fid, t5-base-fid`,
+const guide: SmrRequestBody = {
+    topk: "input별 확률 순 output들",
     batch_size: "모델 병렬 처리 단위",
-    messages: {
-        question: `추론에 사용할 Question
-{
-    role: "user",
-    content: question 내용
-}`,
-        context: `추론에 사용할 Context
-{
-    role: "context",
-    content: context 내용
-}
-- context는 복수 입력 가능`    }
+    text: [`<질의문 전처리 가이드>
+1. 화자(고객, 상담원)을 발화문 앞에 ']'와 함께 명시함
+2. 한 화자가 연속해서 발화할 때는 발화문을 한 턴으로 만듦
+ex) "고객] 어..", "고객] 안녕하세요" -> "고객] 어.. 안녕하세요"`]
 };
 
 /**
- * context의 길이 > 0인지 확인 후 등록 버튼을 활성화 합니다.
- */
-watch(context, () => {
-    const contextLength = context.value.trim().length
-    if (contextLength > 0) {
-        isValidContext.value = true;
+* text의 길이 > 0인지 확인 후 등록 버튼을 활성화 합니다.
+*/
+watch(text, () => {
+    const textLength = text.value.trim().length
+    if (textLength > 0) {
+        isValidText.value = true;
     }
     else {
-        isValidContext.value = false;
+        isValidText.value = false;
     }
 }, { immediate: true })
 
@@ -143,16 +128,9 @@ const isEditorValid = computed(() => {
     try {
         const json = JSON.parse(editorValue.value);
         const keys = Object.keys(json);
-        const mustKeys1 = ['model', 'batch_size', 'messages'];
-        mustKeys1.forEach(k => {
+        const mustKeys = ['topk', 'batch_size', 'text'];
+        mustKeys.forEach(k => {
             if (!(keys.includes(k))) {
-                throw new Error;
-            }
-        });
-        const roleKeys = json.messages.map((m: Message) => m.role);
-        const mustKeys2 = ['user', 'context']
-        mustKeys2.forEach(k => {
-            if (!(roleKeys.includes(k))) {
                 throw new Error;
             }
         });
@@ -199,30 +177,14 @@ const changeRadio = async () => {
 }
 
 /**
- * QaRequestBody 형식에 맞게 JSON format으로 만드는 함수입니다.
- * @returns QaRequestBody 형식의 JSON
+ * SmrRequestBody 형식에 맞게 JSON format으로 만드는 함수입니다.
+ * @returns SmrRequestBody 형식의 JSON
  */
-const makeBody = (): QaRequestBody => {
-    let json: Message;
-    let messagesList: Message[] = []
-    // question 추가
-    json = {
-        role: 'user',
-        content: question.value
-    };
-    messagesList.push(json);
-    // context 추가
-    contextList.value.forEach(context => {
-        json = {
-            role: 'context',
-            content: context
-        }
-        messagesList.push(json);
-    });
+const makeBody = (): SmrRequestBody => {
     return {
-        model: model.value,
+        topk: topK.value,
         batch_size: String(parseInt(batchSize.value)),
-        messages: messagesList
+        text: textList.value
     }
 }
 
@@ -232,7 +194,7 @@ const makeBody = (): QaRequestBody => {
 const getResult = async () => {
     try {
         isValid.value = false;
-        let body: QaRequestBody;
+        let body: SmrRequestBody;
         if (inputMode.value === 0) {
             body = makeBody()
         }
@@ -242,7 +204,7 @@ const getResult = async () => {
         const response = await restAPI.post(`/kserve/kubeflow-user-example-com/${name.value}/infer/${name.value}`, body);
         if (response) {
             if (response.code === SuccessResponseCode) {
-                outputValue.value = JSON.stringify(JSON.parse(response.result), null, 4);
+                outputValue.value = JSON.stringify(response.result, null, 4);
             }
             else if (response.code === NotFoundErrorResponseCode) {
                 outputValue.value = response.result;
@@ -261,19 +223,19 @@ const getResult = async () => {
 }
 
 /**
- * context를 추가합니다.
+ * text를 추가합니다.
  */
-const addContext = () => {
-    contextList.value.push(context.value);
-    context.value = "";
+const addText = () => {
+    textList.value.push(text.value);
+    text.value = "";
 }
 
 /**
- * context를 삭제합니다.
+ * text를 삭제합니다.
  * @param idx 제거할 index
  */
 const delBtn = (idx: number) => {
-    contextList.value.splice(idx, 1);
+    textList.value.splice(idx, 1);
 }
 
 </script>
@@ -327,46 +289,37 @@ const delBtn = (idx: number) => {
     width: 100%;
 }
 
-.model {
-    cursor: help;
-}
-
+.top-k,
 .batch-size {
-    height: 57px;
+    height: 65px;
     cursor: help;
 }
 
-.question {
-    width: 88%;
-    margin-bottom: 10px;
-    cursor: help;
-}
-
-.context {
+.text {
     width: 88%;
     height: 15vh;
     cursor: help;
 }
 
-.context-button {
+.text-button {
     width: 11%;
     align-self: center;
     margin-top: 10px;
     margin-left: 5px;
 }
 
-.context-container {
-    height: 45%;
+.text-container {
+    height: 52%;
     margin-top: 10px;
 }
 
-.context-item-text {
+.text-item-text {
     line-height: normal;
     width: 95%;
     padding: 5px 8px 5px 14px;
 }
 
-.context-item:hover {
+.text-item:hover {
     background-color: #D3DBF3;
     border-radius: 5px;
 }

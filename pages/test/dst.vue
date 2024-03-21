@@ -15,34 +15,17 @@
                 </VaCardTitle>
                 <VaCardContent class="test-card-content" v-if="mode === 'Form'">
                     <VaList>
-                        <VaListItem class="input-set-row">
-                            <VaSelect v-model="model" class="model" :options="t5modelOptions" placeholder="사용할 모델 종류"
-                                label="model" :title="guide.model" />
-                            <VaInput v-model="batchSize" class="batch-size ml-2" placeholder="모델 병렬 처리 단위"
-                                label="batch size" type="number" :min="1" :title="guide.batch_size"
-                                :rules="[(bs) => bs > 0 || `Batch Size must be greater than one`]" />
+                        <VaListItem class="input-set">
+                            <VaTextarea v-model="currentUtterance" class="utterance" :resize="false"
+                                placeholder="사용자의 현재 입력을 입력해주세요." label="Current Utterance"
+                                :title="guide.current_utterance" />
                         </VaListItem>
                         <VaListItem class="input-set">
-                            <VaInput v-model="question" class="question" placeholder="question을 입력해주세요."
-                                label="question" :title="guide.messages.question" />
-                        </VaListItem>
-                        <VaListItem class="input-set">
-                            <VaTextarea v-model="context" class="context" :resize="false" placeholder="context를 입력해주세요."
-                                label="Context" :title="guide.messages.context" />
-                            <VaButton class="context-button" @click=addContext() :disabled="!isValidContext">등록
-                            </VaButton>
+                            <VaTextarea v-model="dialogueHistory" class="history mt-2" :resize="false"
+                                placeholder="사용자와 챗봇 사이의 대화 내역을 입력해주세요." label="Dialogue History"
+                                :title="guide.dialogue_history" />
                         </VaListItem>
                     </VaList>
-                    <VaScrollContainer class="context-container" vertical>
-                        <span v-if="contextList.length === 0">Context를 한 개 이상 등록해주세요.</span>
-                        <VaList>
-                            <VaListItem v-for="(data, index) in contextList" :key="index" class="context-item">
-                                <span class="context-item-text">{{ data }}</span>
-                                <va-button icon="close" preset="secondary" color="danger" class="context-item-del"
-                                    v-on:click="delBtn(index)" />
-                            </VaListItem>
-                        </VaList>
-                    </VaScrollContainer>
                 </VaCardContent>
                 <VaCardContent class="test-card-content" v-else-if="mode === 'Editor'">
                     <Editor v-model="editorValue" class="test-editor" />
@@ -66,23 +49,19 @@
 
 <script setup lang="ts">
 import { NotFoundErrorResponseCode, SuccessResponseCode } from '~/assets/const/HttpResponseCode';
-import { t5modelOptions } from "~/assets/data/model";
 import { useModal } from 'vuestic-ui'
 const { confirm } = useModal()
 
 const route = useRoute();
 
-const pageTitle = ref<string>('질의 응답 서비스')
-const name = ref<string>("qa");
+const pageTitle = ref<string>('대화 상태 추적 서비스')
+const name = ref<string>("dst");
 
 // 입력 값
-const model = ref<string>("t5-base-fid");
-const batchSize = ref<string>("1");
-const question = ref<string>("");
-const context = ref<string>("");
+const currentUtterance = ref<string>("");
+const dialogueHistory = ref<string>("");
 const editorValue = ref<string>("");
 
-const contextList = ref<string[]>([]);
 const outputValue = ref<string>("");
 const inputMode = ref<number>(0);
 const inputRadio: { text: string, value: number }[] = [{ text: "Form", value: 0 }, { text: "Editor", value: 1 }]
@@ -91,48 +70,21 @@ const bodySave = ref<string>("");
 
 // 유효성 체크
 const isValid = ref<boolean>(true);
-const isValidContext = ref<boolean>(false);
 
 /**
  * Form의 유효성을 판단합니다.
  */
 const isFormValid = computed(() => {
-    const isGreaterThanZero = parseInt(batchSize.value) > 0;
-    const questionLength = question.value.trim().length;
-    const contextLength = contextList.value.length;
-    return isGreaterThanZero && questionLength > 0 && contextLength > 0;
+    const utteranceLength = currentUtterance.value.length;
+    const historyLength = dialogueHistory.value.length;
+    return utteranceLength > 0 && historyLength > 0;
 })
 
-const guide = {
-    model: `사용할 모델 종류
-- t5-small-fid, t5-base-fid`,
-    batch_size: "모델 병렬 처리 단위",
-    messages: {
-        question: `추론에 사용할 Question
-{
-    role: "user",
-    content: question 내용
-}`,
-        context: `추론에 사용할 Context
-{
-    role: "context",
-    content: context 내용
-}
-- context는 복수 입력 가능`    }
+const guide: DstRequestBody = {
+    current_utterance: '반드시 앞에 user]가 필요합니다.',
+    dialogue_history: `1. 턴 구분을 >*>으로 해야합니다.
+2. user] 혹은 sys] 태그가 필요합니다.`
 };
-
-/**
- * context의 길이 > 0인지 확인 후 등록 버튼을 활성화 합니다.
- */
-watch(context, () => {
-    const contextLength = context.value.trim().length
-    if (contextLength > 0) {
-        isValidContext.value = true;
-    }
-    else {
-        isValidContext.value = false;
-    }
-}, { immediate: true })
 
 /**
  * Editor의 유효성을 판단합니다.
@@ -143,16 +95,9 @@ const isEditorValid = computed(() => {
     try {
         const json = JSON.parse(editorValue.value);
         const keys = Object.keys(json);
-        const mustKeys1 = ['model', 'batch_size', 'messages'];
-        mustKeys1.forEach(k => {
+        const mustKeys = ['current_utterance', 'dialogue_history'];
+        mustKeys.forEach(k => {
             if (!(keys.includes(k))) {
-                throw new Error;
-            }
-        });
-        const roleKeys = json.messages.map((m: Message) => m.role);
-        const mustKeys2 = ['user', 'context']
-        mustKeys2.forEach(k => {
-            if (!(roleKeys.includes(k))) {
                 throw new Error;
             }
         });
@@ -199,30 +144,13 @@ const changeRadio = async () => {
 }
 
 /**
- * QaRequestBody 형식에 맞게 JSON format으로 만드는 함수입니다.
- * @returns QaRequestBody 형식의 JSON
+ * DstRequestBody 형식에 맞게 JSON format으로 만드는 함수입니다.
+ * @returns DstRequestBody 형식의 JSON
  */
-const makeBody = (): QaRequestBody => {
-    let json: Message;
-    let messagesList: Message[] = []
-    // question 추가
-    json = {
-        role: 'user',
-        content: question.value
-    };
-    messagesList.push(json);
-    // context 추가
-    contextList.value.forEach(context => {
-        json = {
-            role: 'context',
-            content: context
-        }
-        messagesList.push(json);
-    });
+const makeBody = (): DstRequestBody => {
     return {
-        model: model.value,
-        batch_size: String(parseInt(batchSize.value)),
-        messages: messagesList
+        current_utterance: currentUtterance.value,
+        dialogue_history: dialogueHistory.value
     }
 }
 
@@ -232,7 +160,7 @@ const makeBody = (): QaRequestBody => {
 const getResult = async () => {
     try {
         isValid.value = false;
-        let body: QaRequestBody;
+        let body: DstRequestBody;
         if (inputMode.value === 0) {
             body = makeBody()
         }
@@ -242,7 +170,7 @@ const getResult = async () => {
         const response = await restAPI.post(`/kserve/kubeflow-user-example-com/${name.value}/infer/${name.value}`, body);
         if (response) {
             if (response.code === SuccessResponseCode) {
-                outputValue.value = JSON.stringify(JSON.parse(response.result), null, 4);
+                outputValue.value = JSON.stringify(response.result, null, 4);
             }
             else if (response.code === NotFoundErrorResponseCode) {
                 outputValue.value = response.result;
@@ -259,23 +187,6 @@ const getResult = async () => {
     }
     isValid.value = true;
 }
-
-/**
- * context를 추가합니다.
- */
-const addContext = () => {
-    contextList.value.push(context.value);
-    context.value = "";
-}
-
-/**
- * context를 삭제합니다.
- * @param idx 제거할 index
- */
-const delBtn = (idx: number) => {
-    contextList.value.splice(idx, 1);
-}
-
 </script>
 
 <style scoped>
@@ -315,59 +226,22 @@ const delBtn = (idx: number) => {
     height: 90%;
 }
 
-.input-set-row {
-    display: flex;
-    flex-direction: row;
-    width: 50%;
-    margin-bottom: 10px;
-}
-
 .input-set {
     display: flex;
     width: 100%;
 }
 
-.model {
-    cursor: help;
-}
-
-.batch-size {
-    height: 57px;
-    cursor: help;
-}
-
-.question {
+.utterance,
+.history {
     width: 88%;
-    margin-bottom: 10px;
     cursor: help;
 }
 
-.context {
-    width: 88%;
+.utterance {
     height: 15vh;
-    cursor: help;
 }
 
-.context-button {
-    width: 11%;
-    align-self: center;
-    margin-top: 10px;
-    margin-left: 5px;
-}
-
-.context-container {
-    height: 45%;
-    margin-top: 10px;
-}
-
-.context-item-text {
-    line-height: normal;
-    width: 95%;
-    padding: 5px 8px 5px 14px;
-}
-
-.context-item:hover {
-    background-color: #D3DBF3;
-    border-radius: 5px;
+.history {
+    height: 40vh;
 }
 </style>

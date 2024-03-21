@@ -3,6 +3,7 @@ export { };
 declare global {
     type Model = string
     type BatchSize = string
+    type Speaker = 'customer' | 'counselor'
 
     interface SmrRequestBody {
         topk: string,
@@ -18,7 +19,7 @@ declare global {
     interface QaRequestBody {
         model: Model,
         batch_size: BatchSize,
-        message: Message[]
+        messages: Message[]
     }
 
     interface DstRequestBody {
