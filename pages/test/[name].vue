@@ -83,7 +83,7 @@ const delBtn = (idx: number) => {
 const getResult = async () => {
     try {
         isValid.value = false;
-        const response = await restAPI.post(`/kserve/kubeflow-user-example-com/${route.params.name}/infer?model_format=${modelFormat}`, inputValue.value);
+        const response = await restAPI.post(`/kserve/${route.params.name}/infer`, inputValue.value);
         if (response) {
             if (response.code === SuccessResponseCode) {
                 outputValue.value = JSON.stringify(response.result, null, 4);

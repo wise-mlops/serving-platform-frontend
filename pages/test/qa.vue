@@ -239,7 +239,7 @@ const getResult = async () => {
         else if (inputMode.value === 1) {
             body = JSON.parse(editorValue.value);
         }
-        const response = await restAPI.post(`/kserve/kubeflow-user-example-com/${name.value}/infer/${name.value}`, body);
+        const response = await restAPI.post(`/kserve/${name.value}/infer/${name.value}`, body);
         if (response) {
             if (response.code === SuccessResponseCode) {
                 outputValue.value = JSON.stringify(JSON.parse(response.result), null, 4);
