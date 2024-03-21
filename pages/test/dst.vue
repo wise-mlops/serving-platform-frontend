@@ -170,7 +170,7 @@ const getResult = async () => {
         const response = await restAPI.post(`/kserve/${name.value}/infer/${name.value}`, body);
         if (response) {
             if (response.code === SuccessResponseCode) {
-                outputValue.value = JSON.stringify(JSON.parse(response.result), null, 4);
+                outputValue.value = JSON.stringify(response.result, null, 4);
             }
             else if (response.code === NotFoundErrorResponseCode) {
                 outputValue.value = response.result;
