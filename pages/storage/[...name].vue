@@ -319,8 +319,8 @@ const getFiles = async () => {
     const response: ObjectsResponsebody = await restAPI.get(APIurl);
     if (response) {
       if (response.code === SuccessResponseCode) {
-        datas.value = response.result.message.result_details
-        totalPage.value = Math.ceil(response.result.message.total_result_details / pageSize);
+        datas.value = response.result.result_details
+        totalPage.value = Math.ceil(response.result.total_result_details / pageSize);
         loadedList.value[currentPage.value] = datas.value;
       }
       else {
@@ -463,15 +463,23 @@ const uploadObject = async (hide) => {
       const response = await restAPI.post(url, data);
       if (response) {
         if (response.code === SuccessResponseCode) {
-          if (response.result) {
-            currentPage.value = 1;
-            loadedList.value = {};
-            setTimeout(async () => {
-              await getFiles();
-              alert('업로드가 완료되었습니다.');
-              isValid.value = true;
-            }, 2000);
+          const res = response.result;
+          const successNum = res.succeeded.length;
+          const failNum = res.failed.length;
+          if (successNum > 0 && failNum === 0) {
+            alert('업로드가 완료되었습니다.');
           }
+          else {
+            alert(`파일 업로드가 실패하였습니다.
+업로드 실패한 파일 목록
+- ${res.failed.join('\n- ')}`)
+          }
+          currentPage.value = 1;
+          loadedList.value = {};
+          setTimeout(async () => {
+            await getFiles();
+            isValid.value = true;
+          }, 2000);
         }
         else if (response.code === DuplicatedErrorResponseCode) {
           alert(response.result);

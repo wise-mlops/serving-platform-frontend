@@ -1,6 +1,6 @@
 export const t5modelOptions = [
-    "t5-small-fid",
-    "t5-base-fid"
+    "t5-base-fid",
+    "t5-small-fid"
 ]
 
 export const modelFormatOptions = [

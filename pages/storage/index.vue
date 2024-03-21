@@ -179,8 +179,8 @@ const getBucket = async () => {
     const response: BucketsResponsebody = await restAPI.get(APIurl);
     if (response) {
       if (response.code === SuccessResponseCode) {
-        datas.value = response.result.message.result_details;
-        totalPage.value = Math.ceil(response.result.message.total_result_details / pageSize);
+        datas.value = response.result.result_details;
+        totalPage.value = Math.ceil(response.result.total_result_details / pageSize);
         loadedList.value[currentPage.value] = datas.value;
       }
       else {

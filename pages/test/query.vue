@@ -18,13 +18,10 @@
                         <VaListItem class="input-set-row">
                             <VaSelect v-model="model" class="model" :options="t5modelOptions" placeholder="사용할 모델 종류"
                                 label="model" :title="guide.model" />
-                            <VaInput v-model="batchSize" class="batch-size ml-2" placeholder="모델 병렬 처리 단위"
-                                label="batch size" type="number" :min="1" :title="guide.batch_size"
-                                :rules="[(bs) => bs > 0 || `Batch Size must be greater than one`]" />
                         </VaListItem>
                         <VaListItem class="input-set">
-                            <VaInput v-model="question" class="question" placeholder="question을 입력해주세요."
-                                label="question" :title="guide.messages.question" />
+                            <VaInput v-model="keyword" class="keyword" placeholder="keyword을 입력해주세요." label="keyword"
+                                :title="guide.messages.keyword" />
                         </VaListItem>
                         <VaListItem class="input-set">
                             <VaTextarea v-model="context" class="context" :resize="false" placeholder="context를 입력해주세요."
@@ -72,13 +69,12 @@ const { confirm } = useModal()
 
 const route = useRoute();
 
-const pageTitle = ref<string>('질의 응답 서비스')
-const name = ref<string>("qa");
+const pageTitle = ref<string>('추천 질의 생성 서비스');
+const name = ref<string>("query");
 
 // 입력 값
 const model = ref<string>("t5-base-fid");
-const batchSize = ref<string>("1");
-const question = ref<string>("");
+const keyword = ref<string>("");
 const context = ref<string>("");
 const editorValue = ref<string>("");
 
@@ -97,28 +93,27 @@ const isValidContext = ref<boolean>(false);
  * Form의 유효성을 판단합니다.
  */
 const isFormValid = computed(() => {
-    const isGreaterThanZero = parseInt(batchSize.value) > 0;
-    const questionLength = question.value.trim().length;
+    const keywordLength = keyword.value.trim().length;
     const contextLength = contextList.value.length;
-    return isGreaterThanZero && questionLength > 0 && contextLength > 0;
+    return keywordLength > 0 && contextLength > 0;
 })
 
 const guide = {
     model: `사용할 모델 종류
-- t5-small-fid, t5-base-fid`,
-    batch_size: "모델 병렬 처리 단위",
+- t5-base-fid`,
     messages: {
-        question: `추론에 사용할 Question
+        keyword: `원하는 Keyword
 {
     role: "user",
-    content: question 내용
+    content: keyword
 }`,
-        context: `추론에 사용할 Context
+        context: `질의를 생성할 Context
 {
     role: "context",
     content: context 내용
 }
-- context는 복수 입력 가능`    }
+- context는 복수 입력 가능`
+    }
 };
 
 /**
@@ -143,7 +138,7 @@ const isEditorValid = computed(() => {
     try {
         const json = JSON.parse(editorValue.value);
         const keys = Object.keys(json);
-        const mustKeys1 = ['model', 'batch_size', 'messages'];
+        const mustKeys1 = ['model', 'messages'];
         mustKeys1.forEach(k => {
             if (!(keys.includes(k))) {
                 throw new Error;
@@ -199,16 +194,16 @@ const changeRadio = async () => {
 }
 
 /**
- * QaRequestBody 형식에 맞게 JSON format으로 만드는 함수입니다.
- * @returns QaRequestBody 형식의 JSON
+ * QueryRequestBody 형식에 맞게 JSON format으로 만드는 함수입니다.
+ * @returns QueryRequestBody 형식의 JSON
  */
-const makeBody = (): QaRequestBody => {
+const makeBody = (): QueryRequestBody => {
     let json: Message;
     let messagesList: Message[] = []
-    // question 추가
+    // keyword 추가
     json = {
         role: 'user',
-        content: question.value
+        content: keyword.value
     };
     messagesList.push(json);
     // context 추가
@@ -221,7 +216,6 @@ const makeBody = (): QaRequestBody => {
     });
     return {
         model: model.value,
-        batch_size: String(parseInt(batchSize.value)),
         messages: messagesList
     }
 }
@@ -232,7 +226,7 @@ const makeBody = (): QaRequestBody => {
 const getResult = async () => {
     try {
         isValid.value = false;
-        let body: QaRequestBody;
+        let body: QueryRequestBody;
         if (inputMode.value === 0) {
             body = makeBody()
         }
@@ -242,7 +236,7 @@ const getResult = async () => {
         const response = await restAPI.post(`/kserve/kubeflow-user-example-com/${name.value}/infer/${name.value}`, body);
         if (response) {
             if (response.code === SuccessResponseCode) {
-                outputValue.value = JSON.stringify(JSON.parse(response.result), null, 4);
+                outputValue.value = JSON.stringify(response.result, null, 4);
             }
             else if (response.code === NotFoundErrorResponseCode) {
                 outputValue.value = response.result;
@@ -331,12 +325,7 @@ const delBtn = (idx: number) => {
     cursor: help;
 }
 
-.batch-size {
-    height: 57px;
-    cursor: help;
-}
-
-.question {
+.keyword {
     width: 88%;
     margin-bottom: 10px;
     cursor: help;

@@ -8,10 +8,8 @@ declare global {
 
     interface BucketsResponsebody extends ResponseBody {
         result: {
-            message: {
-                total_result_details: number,
-                result_details: BucketDetail[]
-            }
+            total_result_details: number,
+            result_details: BucketDetail[]
         }
     }
 
@@ -23,10 +21,8 @@ declare global {
 
     interface ObjectsResponsebody extends ResponseBody {
         result: {
-            message: {
-                total_result_details: number,
-                result_details: ObjectDetail[]
-            }
+            total_result_details: number,
+            result_details: ObjectDetail[]
         }
     }
 }
