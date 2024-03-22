@@ -57,7 +57,6 @@ const isValid = ref<boolean>(true);
 const input = ref<string>("");
 const inputValue = ref([]);
 const outputValue = ref<string>("");
-const modelFormat = route.query.model_format;
 
 const isText = computed(() => {
     return inputValue.value.length > 0;

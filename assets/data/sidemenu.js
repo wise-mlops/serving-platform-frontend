@@ -1,24 +1,10 @@
 export const sideMenuData = [
   {
-    id: 'main',
-    icon: 'home',
-    title: 'main',
-    path: '/',
-    description: '메인페이지'
-  },
-  {
     id: 'services',
     icon: 'dashboard',
     title: 'Inference Service',
     path: '/services',
     description: 'Inference Service 목록'
-  },
-  {
-    id: 'storage',
-    icon: 'storage',
-    title: 'Storage',
-    path: '/storage',
-    description: 'Storage'
   },
   {
     id: 'smr',
@@ -47,5 +33,12 @@ export const sideMenuData = [
     title: '추천 질의 생성',
     path: '/test/query',
     description: '추천 질의 생성 서비스'
+  },
+  {
+    id: 'storage',
+    icon: 'storage',
+    title: 'Storage',
+    path: '/storage',
+    description: 'Storage'
   },
 ]

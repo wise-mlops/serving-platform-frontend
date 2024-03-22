@@ -258,9 +258,9 @@ const goDetail = (event: any) => {
 /**
  * Inference Service 테스트 페이지로 이동합니다.
  */
-const goTest = async (name: string, status: string, modelFormat: string) => {
+const goTest = async (name: string, status: string) => {
   if (status === 'True') {
-    router.push({ path: `/test/${name}`, query: { model_format: modelFormat } });
+    router.push(`/test/${name}`);
   }
   else {
     alert('Inference Service의 상태가 Ready일 때만 테스트 가능합니다.');
