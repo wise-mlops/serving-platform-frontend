@@ -17,11 +17,6 @@ export default defineNuxtConfig({
   },
   css: ['~/assets/css/index.css'],
   modules: ['@vuestic/nuxt', 'nuxt-monaco-editor'],
-  runtimeConfig: {
-    public: {
-      baseURL: 'https://labs.wisenut.kr/clusters/local/namespaces/wise-serving-platform/services/web/'
-    }
-  },
   vuestic: {
     config: {},
     css: ['typography', 'reset']
