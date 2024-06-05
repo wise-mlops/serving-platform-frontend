@@ -1,7 +1,7 @@
 export default defineAppConfig({
   title: 'This is Serving Platform',
   logoTitle: 'Serving Platform',
-  apiServer: 'http://local.api.kserve.labs.wisenut.com/',
+  apiServer: 'https://labs.wisenut.kr/clusters/local/namespaces/wise-serving-platform/services/api',
   theme: {
     dark: true,
     colors: {

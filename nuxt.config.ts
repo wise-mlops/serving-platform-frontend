@@ -19,7 +19,7 @@ export default defineNuxtConfig({
   modules: ['@vuestic/nuxt', 'nuxt-monaco-editor'],
   runtimeConfig: {
     public: {
-      baseURL: 'http://local.api.kserve.labs.wisenut.com'
+      baseURL: '/clusters/local/namespaces/wise-serving-platform/services/web/'
     }
   },
   vuestic: {
