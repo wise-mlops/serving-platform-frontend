@@ -412,7 +412,6 @@ const download = async () => {
     const objectsQuery: string = objects.join('&');
     const APIurl = `/bucket/object/${selectedBucket.value}/download?${objectsQuery}`;
     const response = await restAPI.get(APIurl);
-    const baseURL = useRuntimeConfig().public.baseURL;
     const downloadLink = document.createElement("a");
     downloadLink.href = baseURL + APIurl;
     downloadLink.download = currentPath.value;

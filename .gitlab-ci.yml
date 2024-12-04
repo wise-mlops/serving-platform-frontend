@@ -26,3 +26,4 @@ deploy-container-image:
     - docker push $CI_REGISTRY_IMAGE:latest
   only:
     - main
+    - deploy
